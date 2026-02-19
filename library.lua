@@ -1,11 +1,9 @@
--- YUUGLR Library
 local YUUGLR = {}
 local players = game:GetService("Players")
 local player = players.LocalPlayer
 local tweenService = game:GetService("TweenService")
 local userInputService = game:GetService("UserInputService")
 local runService = game:GetService("RunService")
-
 local isMobile = userInputService.TouchEnabled
 
 function YUUGLR:CreateWindow(title, credits, size)
@@ -16,13 +14,17 @@ function YUUGLR:CreateWindow(title, credits, size)
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.DisplayOrder = 999
     ScreenGui.ResetOnSpawn = false
+    ScreenGui.Parent = player:WaitForChild("PlayerGui")
     
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = size
-    MainFrame.Position = isMobile and UDim2.new(1, -295, 0.5, -160) or UDim2.new(1, -375, 0.5, -200)
+    MainFrame.Position = UDim2.new(0.5, -size.X.Offset/2, 0.5, -size.Y.Offset/2)
     MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
     MainFrame.BorderSizePixel = 0
+    MainFrame.Active = true
+    MainFrame.Draggable = true
+    MainFrame.Parent = ScreenGui
     
     local Gradient = Instance.new("UIGradient")
     Gradient.Color = ColorSequence.new({
@@ -42,15 +44,18 @@ function YUUGLR:CreateWindow(title, credits, size)
     Shadow.ImageTransparency = 0.9
     Shadow.ScaleType = Enum.ScaleType.Slice
     Shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+    Shadow.Parent = MainFrame
     
     local UICorner = Instance.new("UICorner")
     UICorner.CornerRadius = UDim.new(0, 16)
+    UICorner.Parent = MainFrame
     
     local Header = Instance.new("Frame")
     Header.Name = "Header"
     Header.Size = UDim2.new(1, 0, 0, isMobile and 35 or 45)
     Header.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
     Header.BorderSizePixel = 0
+    Header.Parent = MainFrame
     
     local HeaderGradient = Instance.new("UIGradient")
     HeaderGradient.Color = ColorSequence.new({
@@ -61,6 +66,7 @@ function YUUGLR:CreateWindow(title, credits, size)
     
     local HeaderCorner = Instance.new("UICorner")
     HeaderCorner.CornerRadius = UDim.new(0, 16)
+    HeaderCorner.Parent = Header
     
     local Title = Instance.new("TextLabel")
     Title.Name = "Title"
@@ -72,6 +78,7 @@ function YUUGLR:CreateWindow(title, credits, size)
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = isMobile and 14 or 18
     Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.Parent = Header
     
     local VersionLabel = Instance.new("TextLabel")
     VersionLabel.Name = "VersionLabel"
@@ -83,6 +90,7 @@ function YUUGLR:CreateWindow(title, credits, size)
     VersionLabel.Font = Enum.Font.Gotham
     VersionLabel.TextSize = isMobile and 9 or 11
     VersionLabel.TextXAlignment = Enum.TextXAlignment.Left
+    VersionLabel.Parent = Header
     
     local CloseButton = Instance.new("TextButton")
     CloseButton.Name = "CloseButton"
@@ -93,6 +101,7 @@ function YUUGLR:CreateWindow(title, credits, size)
     CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     CloseButton.Font = Enum.Font.GothamBold
     CloseButton.TextSize = isMobile and 16 or 20
+    CloseButton.Parent = Header
     
     local CloseCorner = Instance.new("UICorner")
     CloseCorner.CornerRadius = UDim.new(0, 8)
@@ -102,56 +111,7 @@ function YUUGLR:CreateWindow(title, credits, size)
         ScreenGui:Destroy()
     end)
     
-    HeaderCorner.Parent = Header
-    Shadow.Parent = MainFrame
-    UICorner.Parent = MainFrame
-    Header.Parent = MainFrame
-    Title.Parent = Header
-    VersionLabel.Parent = Header
-    CloseButton.Parent = Header
-    MainFrame.Parent = ScreenGui
-    
-    self:MakeDraggable(MainFrame, Header)
-    
     return ScreenGui, MainFrame, Header
-end
-
-function YUUGLR:MakeDraggable(frame, header)
-    local dragging = false
-    local dragInput, dragStart, startPos
-
-    local function update(input)
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-
-    header.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = frame.Position
-            
-            local connection
-            connection = input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                    connection:Disconnect()
-                end
-            end)
-        end
-    end)
-
-    header.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
-    end)
-
-    userInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            update(input)
-        end
-    end)
 end
 
 function YUUGLR:CreateButton(parent, text, position, size, color, callback)
@@ -182,33 +142,30 @@ function YUUGLR:CreateButton(parent, text, position, size, color, callback)
     corner.CornerRadius = UDim.new(0, 10)
     corner.Parent = button
     
-    local function animate(enabled)
-        local targetColor = enabled and Color3.fromRGB(60, 180, 80) or color
-        local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        local tween = tweenService:Create(button, tweenInfo, {BackgroundColor3 = targetColor})
-        tween:Play()
-    end
-    
     button.MouseButton1Click:Connect(function()
-        animate(true)
+        local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local tween = tweenService:Create(button, tweenInfo, {BackgroundColor3 = Color3.fromRGB(60, 180, 80)})
+        tween:Play()
         task.wait(0.2)
-        animate(false)
+        tween = tweenService:Create(button, tweenInfo, {BackgroundColor3 = color})
+        tween:Play()
         if callback then callback() end
     end)
     
-    return button, animate
+    return button
 end
 
-function YUUGLR:CreateLabel(parent, text, position, size)
+function YUUGLR:CreateLabel(parent, text, position, size, color)
     size = size or UDim2.new(1, -20, 0, isMobile and 22 or 28)
     position = position or UDim2.new(0, 10, 0, 0)
+    color = color or Color3.fromRGB(200, 200, 220)
     
     local label = Instance.new("TextLabel")
     label.Size = size
     label.Position = position
     label.BackgroundTransparency = 1
     label.Text = text
-    label.TextColor3 = Color3.fromRGB(200, 200, 220)
+    label.TextColor3 = color
     label.Font = Enum.Font.Gotham
     label.TextSize = isMobile and 12 or 14
     label.TextXAlignment = Enum.TextXAlignment.Left
@@ -248,14 +205,6 @@ function YUUGLR:CreateToggle(parent, text, default, position, callback)
     
     local state = default or false
     
-    local function animate(newState)
-        local targetColor = newState and Color3.fromRGB(80, 220, 100) or Color3.fromRGB(220, 80, 80)
-        local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        local tween = tweenService:Create(value, tweenInfo, {TextColor3 = targetColor})
-        tween:Play()
-        value.Text = tostring(newState)
-    end
-    
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(1, 0, 1, 0)
     button.BackgroundTransparency = 1
@@ -264,13 +213,19 @@ function YUUGLR:CreateToggle(parent, text, default, position, callback)
     
     button.MouseButton1Click:Connect(function()
         state = not state
-        animate(state)
+        local targetColor = state and Color3.fromRGB(80, 220, 100) or Color3.fromRGB(220, 80, 80)
+        local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local tween = tweenService:Create(value, tweenInfo, {TextColor3 = targetColor})
+        tween:Play()
+        value.Text = tostring(state)
         if callback then callback(state) end
     end)
     
     return frame, function() return state end, function(newState)
         state = newState
-        animate(state)
+        local targetColor = state and Color3.fromRGB(80, 220, 100) or Color3.fromRGB(220, 80, 80)
+        value.TextColor3 = targetColor
+        value.Text = tostring(state)
     end
 end
 
@@ -288,7 +243,7 @@ function YUUGLR:CreateSlider(parent, text, default, min, max, position, callback
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 0, isMobile and 20 or 25)
     label.BackgroundTransparency = 1
-    label.Text = text .. ":"
+    label.Text = text .. ": " .. default
     label.TextColor3 = Color3.fromRGB(200, 200, 220)
     label.Font = Enum.Font.Gotham
     label.TextSize = isMobile and 12 or 14
@@ -309,7 +264,7 @@ function YUUGLR:CreateSlider(parent, text, default, min, max, position, callback
     
     local fill = Instance.new("Frame")
     fill.Name = "Fill"
-    fill.Size = UDim2.new(default / max, 0, 1, 0)
+    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
     fill.BackgroundColor3 = Color3.fromRGB(80, 100, 220)
     fill.BorderSizePixel = 0
     fill.Parent = slider
@@ -318,56 +273,54 @@ function YUUGLR:CreateSlider(parent, text, default, min, max, position, callback
     fillCorner.CornerRadius = UDim.new(0, 10)
     fillCorner.Parent = fill
     
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0, isMobile and 16 or 20, 0, isMobile and 16 or 20)
-    button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    button.Text = ""
-    button.BorderSizePixel = 0
-    button.Parent = slider
+    local dragButton = Instance.new("TextButton")
+    dragButton.Size = UDim2.new(0, isMobile and 20 or 24, 0, isMobile and 20 or 24)
+    dragButton.Position = UDim2.new((default - min) / (max - min), -10, 0.5, -10)
+    dragButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    dragButton.Text = ""
+    dragButton.BorderSizePixel = 0
+    dragButton.Parent = slider
     
-    local buttonCorner = Instance.new("UICorner")
-    buttonCorner.CornerRadius = UDim.new(0, 10)
-    buttonCorner.Parent = button
+    local dragCorner = Instance.new("UICorner")
+    dragCorner.CornerRadius = UDim.new(0, 12)
+    dragCorner.Parent = dragButton
     
     local value = default
     local dragging = false
     
-    local function setValue(val)
-        value = math.clamp(val, min, max)
-        local fillWidth = (slider.AbsoluteSize.X * (value - min)) / (max - min)
-        fill.Size = UDim2.new(0, fillWidth, 1, 0)
-        button.Position = UDim2.new((value - min) / (max - min), -10, 0, 0)
-    end
-    
-    button.MouseButton1Down:Connect(function()
-        dragging = true
-    end)
-    
-    button.TouchLongPress:Connect(function()
+    dragButton.MouseButton1Down:Connect(function()
         dragging = true
     end)
     
     userInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
         end
     end)
     
     userInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local mousePos = input.Position.X
             local sliderPos = slider.AbsolutePosition.X
             local sliderSize = slider.AbsoluteSize.X
             local relativePos = math.clamp((mousePos - sliderPos) / sliderSize, 0, 1)
             local newValue = min + (relativePos * (max - min))
-            setValue(newValue)
+            value = newValue
+            
+            fill.Size = UDim2.new(relativePos, 0, 1, 0)
+            dragButton.Position = UDim2.new(relativePos, -10, 0.5, -10)
+            label.Text = text .. ": " .. math.floor(newValue)
             if callback then callback(newValue) end
         end
     end)
     
-    setValue(default)
-    
-    return frame, function() return value end, setValue
+    return frame, function() return value end, function(newValue)
+        value = newValue
+        local relativePos = (value - min) / (max - min)
+        fill.Size = UDim2.new(relativePos, 0, 1, 0)
+        dragButton.Position = UDim2.new(relativePos, -10, 0.5, -10)
+        label.Text = text .. ": " .. math.floor(value)
+    end
 end
 
 function YUUGLR:CreateScrollingFrame(parent, size, position)
@@ -381,13 +334,28 @@ function YUUGLR:CreateScrollingFrame(parent, size, position)
     frame.BorderSizePixel = 0
     frame.ScrollBarThickness = 4
     frame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 130)
+    frame.CanvasSize = UDim2.new(0, 0, 0, 0)
     frame.Parent = parent
     
     local layout = Instance.new("UIListLayout")
     layout.Padding = UDim.new(0, isMobile and 4 or 6)
     layout.Parent = frame
     
+    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        frame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+    end)
+    
     return frame, layout
+end
+
+function YUUGLR:CreateTab(parent)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -20, 0, isMobile and 120 or 160)
+    frame.Position = UDim2.new(0, 10, 1, isMobile and -130 or -170)
+    frame.BackgroundTransparency = 1
+    frame.Parent = parent
+    
+    return frame
 end
 
 function YUUGLR:CreateNotification(text, duration)
@@ -444,22 +412,6 @@ function YUUGLR:CreateNotification(text, duration)
     tween2.Completed:Connect(function()
         ScreenGui:Destroy()
     end)
-end
-
-function YUUGLR:CreateTab(parent, buttons)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, -20, 0, isMobile and 120 or 160)
-    frame.Position = UDim2.new(0, 10, 1, isMobile and -130 or -170)
-    frame.BackgroundTransparency = 1
-    frame.Parent = parent
-    
-    local yPos = 0
-    for i, button in ipairs(buttons) do
-        local btn = self:CreateButton(frame, button.text, UDim2.new(0, 0, 0, yPos), button.size, button.color, button.callback)
-        yPos = yPos + (isMobile and 32 or 40)
-    end
-    
-    return frame
 end
 
 return YUUGLR
