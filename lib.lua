@@ -822,7 +822,7 @@ function YUUGTRL:CreateWindow(title, size)
             if enterPressed and callback then
                 callback(box.Text)
             end
-        end))
+        end)
         
         table.insert(self.Elements, {frame, box})
         
