@@ -203,7 +203,8 @@ local function makeDraggable(frame, handle)
     end)
 end
 
-function YUUGTRL:CreateWindow(title, size)
+function YUUGTRL:CreateWindow(title, size, options)
+    options = options or {}
     size = size or (isMobile and UDim2.new(0, 260, 0, 300) or UDim2.new(0, 320, 0, 360))
     
     local screenGui = Instance.new("ScreenGui")
@@ -249,6 +250,68 @@ function YUUGTRL:CreateWindow(title, size)
     titleLabel.TextSize = isMobile and 13 or 15
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
     titleLabel.Parent = header
+    
+    if options.ShowClose ~= false then
+        local closeButton = Instance.new("TextButton")
+        closeButton.Name = "CloseButton"
+        closeButton.Size = UDim2.new(0, isMobile and 22 or 24, 0, isMobile and 22 or 24)
+        closeButton.Position = UDim2.new(1, -(isMobile and 26 or 28), 0, isMobile and 4 or 5)
+        closeButton.BackgroundColor3 = options.CloseColor or Color3.fromRGB(200, 70, 70)
+        closeButton.Text = ""
+        closeButton.Parent = header
+        
+        createCorner(closeButton, 6)
+        createButtonGradient(closeButton, closeButton.BackgroundColor3, false)
+        createButtonText(closeButton, "×", closeButton.BackgroundColor3, isMobile and 14 or 15, false)
+        
+        closeButton.MouseButton1Down:Connect(function()
+            createButtonGradient(closeButton, closeButton.BackgroundColor3, true)
+            createButtonText(closeButton, "×", closeButton.BackgroundColor3, isMobile and 14 or 15, true)
+        end)
+        
+        closeButton.MouseButton1Up:Connect(function()
+            createButtonGradient(closeButton, closeButton.BackgroundColor3, false)
+            createButtonText(closeButton, "×", closeButton.BackgroundColor3, isMobile and 14 or 15, false)
+        end)
+        
+        closeButton.MouseLeave:Connect(function()
+            createButtonGradient(closeButton, closeButton.BackgroundColor3, false)
+            createButtonText(closeButton, "×", closeButton.BackgroundColor3, isMobile and 14 or 15, false)
+        end)
+        
+        windowObj.CloseButton = closeButton
+    end
+    
+    if options.ShowSettings then
+        local settingsButton = Instance.new("TextButton")
+        settingsButton.Name = "SettingsButton"
+        settingsButton.Size = UDim2.new(0, isMobile and 22 or 24, 0, isMobile and 22 or 24)
+        settingsButton.Position = options.SettingsPosition or UDim2.new(1, -(isMobile and 52 or 56), 0, isMobile and 4 or 5)
+        settingsButton.BackgroundColor3 = options.SettingsColor or Color3.fromRGB(80, 100, 220)
+        settingsButton.Text = ""
+        settingsButton.Parent = header
+        
+        createCorner(settingsButton, 6)
+        createButtonGradient(settingsButton, settingsButton.BackgroundColor3, false)
+        createButtonText(settingsButton, "⚙", settingsButton.BackgroundColor3, isMobile and 14 or 15, false)
+        
+        settingsButton.MouseButton1Down:Connect(function()
+            createButtonGradient(settingsButton, settingsButton.BackgroundColor3, true)
+            createButtonText(settingsButton, "⚙", settingsButton.BackgroundColor3, isMobile and 14 or 15, true)
+        end)
+        
+        settingsButton.MouseButton1Up:Connect(function()
+            createButtonGradient(settingsButton, settingsButton.BackgroundColor3, false)
+            createButtonText(settingsButton, "⚙", settingsButton.BackgroundColor3, isMobile and 14 or 15, false)
+        end)
+        
+        settingsButton.MouseLeave:Connect(function()
+            createButtonGradient(settingsButton, settingsButton.BackgroundColor3, false)
+            createButtonText(settingsButton, "⚙", settingsButton.BackgroundColor3, isMobile and 14 or 15, false)
+        end)
+        
+        windowObj.SettingsButton = settingsButton
+    end
     
     makeDraggable(mainFrame, header)
     
