@@ -6,30 +6,6 @@ local userInputService = game:GetService("UserInputService")
 local runService = game:GetService("RunService")
 local isMobile = userInputService.TouchEnabled
 
-local closeStyles = {
-    classic = {text = "✕", color = Color3.fromRGB(255, 80, 80), hover = Color3.fromRGB(255, 120, 120)},
-    modern = {text = "🗙", color = Color3.fromRGB(220, 70, 70), hover = Color3.fromRGB(255, 100, 100)},
-    circle = {text = "●", color = Color3.fromRGB(255, 60, 60), hover = Color3.fromRGB(255, 100, 100)},
-    square = {text = "⬛", color = Color3.fromRGB(200, 60, 60), hover = Color3.fromRGB(230, 80, 80)},
-    arrow = {text = "←", color = Color3.fromRGB(100, 100, 255), hover = Color3.fromRGB(140, 140, 255)},
-    arrow2 = {text = "↩", color = Color3.fromRGB(100, 200, 100), hover = Color3.fromRGB(140, 240, 140)},
-    power = {text = "⏻", color = Color3.fromRGB(255, 100, 100), hover = Color3.fromRGB(255, 140, 140)},
-    heart = {text = "❤", color = Color3.fromRGB(255, 80, 120), hover = Color3.fromRGB(255, 120, 160)},
-    star = {text = "★", color = Color3.fromRGB(255, 200, 80), hover = Color3.fromRGB(255, 220, 120)},
-    skull = {text = "☠", color = Color3.fromRGB(150, 150, 150), hover = Color3.fromRGB(200, 200, 200)},
-    ghost = {text = "👻", color = Color3.fromRGB(200, 200, 255), hover = Color3.fromRGB(230, 230, 255)},
-    fire = {text = "🔥", color = Color3.fromRGB(255, 120, 0), hover = Color3.fromRGB(255, 160, 80)},
-    snow = {text = "❄", color = Color3.fromRGB(100, 200, 255), hover = Color3.fromRGB(150, 220, 255)},
-    check = {text = "✓", color = Color3.fromRGB(80, 200, 80), hover = Color3.fromRGB(120, 240, 120)},
-    x = {text = "✗", color = Color3.fromRGB(255, 80, 80), hover = Color3.fromRGB(255, 120, 120)},
-    settings = {text = "⚙", color = Color3.fromRGB(100, 150, 255), hover = Color3.fromRGB(140, 180, 255)},
-    menu = {text = "☰", color = Color3.fromRGB(180, 180, 180), hover = Color3.fromRGB(220, 220, 220)},
-    info = {text = "ⓘ", color = Color3.fromRGB(80, 150, 255), hover = Color3.fromRGB(120, 180, 255)},
-    warning = {text = "⚠", color = Color3.fromRGB(255, 180, 0), hover = Color3.fromRGB(255, 220, 80)},
-    lock = {text = "🔒", color = Color3.fromRGB(150, 150, 150), hover = Color3.fromRGB(200, 200, 200)},
-    unlock = {text = "🔓", color = Color3.fromRGB(100, 200, 100), hover = Color3.fromRGB(140, 240, 140)},
-}
-
 local function showWatermark()
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "YUUGLR_Watermark"
@@ -58,6 +34,26 @@ local function showWatermark()
     })
     gradient.Rotation = 45
     gradient.Parent = frame
+    
+    local outline = Instance.new("Frame")
+    outline.Size = UDim2.new(1, 4, 1, 4)
+    outline.Position = UDim2.new(0, -2, 0, -2)
+    outline.BackgroundTransparency = 1
+    outline.BorderSizePixel = 0
+    outline.Parent = frame
+    
+    local outlineCorner = Instance.new("UICorner")
+    outlineCorner.CornerRadius = UDim.new(0, 27)
+    outlineCorner.Parent = outline
+    
+    local outlineGradient = Instance.new("UIGradient")
+    outlineGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 255)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150, 0, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 0, 200))
+    })
+    outlineGradient.Rotation = 45
+    outlineGradient.Parent = outline
     
     local icon = Instance.new("TextLabel")
     icon.Size = UDim2.new(0, 50, 1, 0)
@@ -109,10 +105,7 @@ end
 
 showWatermark()
 
-function YUUGLR:CreateWindow(title, credits, size, closeStyle)
-    closeStyle = closeStyle or "classic"
-    local style = closeStyles[closeStyle] or closeStyles.classic
-    
+function YUUGLR:CreateWindow(title, credits, size)
     size = size or (isMobile and UDim2.new(0, 280, 0, 320) or UDim2.new(0, 400, 0, 450))
     
     local ScreenGui = Instance.new("ScreenGui")
@@ -204,7 +197,7 @@ function YUUGLR:CreateWindow(title, credits, size, closeStyle)
     Credits.Position = UDim2.new(0, 15, 1, -18)
     Credits.BackgroundTransparency = 1
     Credits.Text = credits
-    Credits.TextColor3 = Color3.fromRGB(170, 170, 255)
+    Credits.TextColor3 = Color3.fromRGB(180, 150, 255)
     Credits.Font = Enum.Font.Gotham
     Credits.TextSize = isMobile and 9 or 11
     Credits.TextXAlignment = Enum.TextXAlignment.Left
@@ -226,8 +219,8 @@ function YUUGLR:CreateWindow(title, credits, size, closeStyle)
     CloseButton.Name = "CloseButton"
     CloseButton.Size = UDim2.new(0, isMobile and 30 or 35, 0, isMobile and 30 or 35)
     CloseButton.Position = UDim2.new(1, isMobile and -35 or -40, 0.5, -17.5)
-    CloseButton.BackgroundColor3 = style.color
-    CloseButton.Text = style.text
+    CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    CloseButton.Text = "✕"
     CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     CloseButton.Font = Enum.Font.GothamBold
     CloseButton.TextSize = isMobile and 16 or 20
@@ -236,16 +229,6 @@ function YUUGLR:CreateWindow(title, credits, size, closeStyle)
     local CloseCorner = Instance.new("UICorner")
     CloseCorner.CornerRadius = UDim.new(0, 10)
     CloseCorner.Parent = CloseButton
-    
-    CloseButton.MouseEnter:Connect(function()
-        tweenService:Create(CloseButton, TweenInfo.new(0.2), {BackgroundColor3 = style.hover}):Play()
-        tweenService:Create(CloseButton, TweenInfo.new(0.2), {Size = UDim2.new(0, (isMobile and 32 or 37), 0, (isMobile and 32 or 37))}):Play()
-    end)
-    
-    CloseButton.MouseLeave:Connect(function()
-        tweenService:Create(CloseButton, TweenInfo.new(0.2), {BackgroundColor3 = style.color}):Play()
-        tweenService:Create(CloseButton, TweenInfo.new(0.2), {Size = UDim2.new(0, isMobile and 30 or 35, 0, isMobile and 30 or 35)}):Play()
-    end)
     
     CloseButton.MouseButton1Click:Connect(function()
         tweenService:Create(MainFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0)}):Play()
@@ -723,6 +706,25 @@ function YUUGLR:CreateNotification(text, duration, type)
     gradient.Rotation = 45
     gradient.Parent = frame
     
+    local outline = Instance.new("Frame")
+    outline.Size = UDim2.new(1, 4, 1, 4)
+    outline.Position = UDim2.new(0, -2, 0, -2)
+    outline.BackgroundTransparency = 1
+    outline.BorderSizePixel = 0
+    outline.Parent = frame
+    
+    local outlineCorner = Instance.new("UICorner")
+    outlineCorner.CornerRadius = UDim.new(0, 27)
+    outlineCorner.Parent = outline
+    
+    local outlineGradient = Instance.new("UIGradient")
+    outlineGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, color),
+        ColorSequenceKeypoint.new(1, Color3.new(color.R * 0.5, color.G * 0.5, color.B * 0.5))
+    })
+    outlineGradient.Rotation = 45
+    outlineGradient.Parent = outline
+    
     local iconLabel = Instance.new("TextLabel")
     iconLabel.Size = UDim2.new(0, 50, 1, 0)
     iconLabel.Position = UDim2.new(0, 10, 0, 0)
@@ -737,7 +739,7 @@ function YUUGLR:CreateNotification(text, duration, type)
     title.Size = UDim2.new(1, -80, 0, 30)
     title.Position = UDim2.new(0, 70, 0, 10)
     title.BackgroundTransparency = 1
-    title.Text = "YUUGLR"
+    title.Text = "YUUGLR LIBRARY"
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
     title.Font = Enum.Font.GothamBold
     title.TextSize = 20
@@ -755,28 +757,13 @@ function YUUGLR:CreateNotification(text, duration, type)
     message.TextXAlignment = Enum.TextXAlignment.Left
     message.Parent = frame
     
-    local tweenInfo = TweenInfo.new(0.6, Enum.EasingStyle.Expo, Enum.EasingDirection.Out)
-    local goal = {Position = UDim2.new(0.5, -175, 0, 30)}
-    local tween = tweenService:Create(frame, tweenInfo, goal)
-    tween:Play()
+    tweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Expo, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -175, 0, 30)}):Play()
     
     task.wait(duration)
     
-    local tweenInfo2 = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-    local goal2 = {Position = UDim2.new(0.5, -175, 0, -100)}
-    local tween2 = tweenService:Create(frame, tweenInfo2, goal2)
-    tween2:Play()
-    tween2.Completed:Connect(function()
-        ScreenGui:Destroy()
-    end)
-end
-
-function YUUGLR:GetCloseStyles()
-    local styles = {}
-    for name, _ in pairs(closeStyles) do
-        table.insert(styles, name)
-    end
-    return styles
+    tweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(0.5, -175, 0, -100)}):Play()
+    task.wait(0.3)
+    ScreenGui:Destroy()
 end
 
 return YUUGLR
