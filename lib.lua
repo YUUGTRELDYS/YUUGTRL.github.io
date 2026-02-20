@@ -7,25 +7,39 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local isMobile = UserInputService.TouchEnabled
 
-local theme = {
-    primary = Color3.fromRGB(80, 100, 220),
-    secondary = Color3.fromRGB(140, 80, 220),
-    success = Color3.fromRGB(80, 180, 120),
-    danger = Color3.fromRGB(200, 70, 70),
-    background = Color3.fromRGB(25, 25, 35),
-    header = Color3.fromRGB(35, 35, 45),
-    text = Color3.fromRGB(255, 255, 255),
-    textSecondary = Color3.fromRGB(200, 200, 220)
-}
+-- Показываем сообщение о загрузке (нельзя убрать)
+local function showLoadMessage()
+    local msgGui = Instance.new("ScreenGui")
+    msgGui.Name = "YUUGTRL_LoadMessage"
+    msgGui.ResetOnSpawn = false
+    msgGui.Parent = player:WaitForChild("PlayerGui")
+    
+    local msgFrame = Instance.new("Frame")
+    msgFrame.Size = UDim2.new(0, 300, 0, 50)
+    msgFrame.Position = UDim2.new(0.5, -150, 0, 10)
+    msgFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    msgFrame.BorderSizePixel = 0
+    msgFrame.Parent = msgGui
+    
+    local msgCorner = Instance.new("UICorner")
+    msgCorner.CornerRadius = UDim.new(0, 8)
+    msgCorner.Parent = msgFrame
+    
+    local msgText = Instance.new("TextLabel")
+    msgText.Size = UDim2.new(1, 0, 1, 0)
+    msgText.BackgroundTransparency = 1
+    msgText.Text = "YUUGTRL Library loaded!"
+    msgText.TextColor3 = Color3.fromRGB(170, 85, 255)
+    msgText.Font = Enum.Font.GothamBold
+    msgText.TextSize = 16
+    msgText.Parent = msgFrame
+    
+    task.wait(3)
+    msgGui:Destroy()
+end
 
-local languages = {
-    English = {
-        settings = "Settings",
-        close = "Close",
-        transparency = "Transparency",
-        language = "Language"
-    }
-}
+-- Запускаем сообщение
+spawn(showLoadMessage)
 
 local function createShadow(parent)
     local shadow = Instance.new("ImageLabel")
@@ -49,21 +63,59 @@ local function createCorner(parent, radius)
     return corner
 end
 
-local function createGradient(parent, color1, color2)
+-- Функция для создания градиента на кнопке (сверху светлее, снизу темнее)
+local function createButtonGradient(button, baseColor)
+    -- Делаем верхнюю часть светлее на 20%, нижнюю часть темнее на 20%
+    local r, g, b = baseColor.R, baseColor.G, baseColor.B
+    
+    local lighter = Color3.new(
+        math.min(r * 1.3, 1),
+        math.min(g * 1.3, 1),
+        math.min(b * 1.3, 1)
+    )
+    
+    local darker = Color3.new(
+        r * 0.7,
+        g * 0.7,
+        b * 0.7
+    )
+    
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, color1 or Color3.fromRGB(40, 40, 50)),
-        ColorSequenceKeypoint.new(1, color2 or Color3.fromRGB(25, 25, 35))
+        ColorSequenceKeypoint.new(0, lighter),
+        ColorSequenceKeypoint.new(1, darker)
     })
-    gradient.Rotation = 45
-    gradient.Parent = parent
+    gradient.Rotation = 90 -- Вертикальный градиент (сверху вниз)
+    gradient.Parent = button
     return gradient
 end
 
+-- Функция для создания яркого текста
+local function createBrightText(parent, text, size)
+    local label = Instance.new("TextLabel")
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(255, 255, 255) -- Чисто белый яркий текст
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = size or (isMobile and 12 or 14)
+    label.TextStrokeTransparency = 0.8 -- Легкая обводка для контраста
+    label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    label.Parent = parent
+    return label
+end
+
 local function animateButton(button, enabled, enabledColor, disabledColor)
-    local targetColor = enabled and (enabledColor or theme.success) or (disabledColor or theme.primary)
+    local targetColor = enabled and (enabledColor or Color3.fromRGB(80, 180, 120)) or (disabledColor or button.BaseColor or Color3.fromRGB(80, 100, 220))
     local tween = TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = targetColor})
     tween:Play()
+    
+    -- Обновляем градиент при изменении цвета
+    for _, child in pairs(button:GetChildren()) do
+        if child:IsA("UIGradient") then
+            child:Destroy()
+        end
+    end
+    createButtonGradient(button, targetColor)
 end
 
 local function makeDraggable(frame, handle)
@@ -123,21 +175,30 @@ function YUUGTRL:CreateWindow(title, size)
     mainFrame.Name = "MainFrame"
     mainFrame.Size = size
     mainFrame.Position = UDim2.new(0.5, -size.X.Offset/2, 0.5, -size.Y.Offset/2)
-    mainFrame.BackgroundColor3 = theme.background
+    mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
     mainFrame.BorderSizePixel = 0
     mainFrame.Parent = screenGui
     
     createShadow(mainFrame)
     createCorner(mainFrame, 16)
-    createGradient(mainFrame, Color3.fromRGB(40, 40, 50), theme.background)
+    
+    -- Градиент для фона окна
+    local windowGradient = Instance.new("UIGradient")
+    windowGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 50)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 25, 35))
+    })
+    windowGradient.Rotation = 45
+    windowGradient.Parent = mainFrame
     
     local header = Instance.new("Frame")
     header.Name = "Header"
     header.Size = UDim2.new(1, 0, 0, isMobile and 35 or 45)
-    header.BackgroundColor3 = theme.header
+    header.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
     header.BorderSizePixel = 0
     header.Parent = mainFrame
     
+    -- Градиент для хедера
     local headerGradient = Instance.new("UIGradient")
     headerGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(60, 60, 80)),
@@ -147,30 +208,25 @@ function YUUGTRL:CreateWindow(title, size)
     
     createCorner(header, 16)
     
-    local titleLabel = Instance.new("TextLabel")
-    titleLabel.Name = "Title"
+    local titleLabel = createBrightText(header, title, isMobile and 14 or 18)
     titleLabel.Size = UDim2.new(1, -60, 1, 0)
     titleLabel.Position = UDim2.new(0, 12, 0, 0)
-    titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = title
-    titleLabel.TextColor3 = theme.text
-    titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.TextSize = isMobile and 14 or 18
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    titleLabel.Parent = header
     
     local closeButton = Instance.new("TextButton")
     closeButton.Name = "CloseButton"
     closeButton.Size = UDim2.new(0, isMobile and 26 or 32, 0, isMobile and 26 or 32)
     closeButton.Position = UDim2.new(1, isMobile and -30 or -37, 0, isMobile and 4 or 6)
-    closeButton.BackgroundColor3 = theme.danger
-    closeButton.Text = "×"
-    closeButton.TextColor3 = theme.text
-    closeButton.Font = Enum.Font.GothamBold
-    closeButton.TextSize = isMobile and 16 or 20
+    closeButton.BackgroundColor3 = Color3.fromRGB(200, 70, 70)
+    closeButton.BaseColor = Color3.fromRGB(200, 70, 70)
+    closeButton.Text = ""
     closeButton.Parent = header
     
     createCorner(closeButton, 8)
+    createButtonGradient(closeButton, Color3.fromRGB(200, 70, 70))
+    
+    local closeText = createBrightText(closeButton, "×", isMobile and 16 or 20)
+    closeText.Size = UDim2.new(1, 0, 1, 0)
     
     closeButton.MouseButton1Click:Connect(function()
         screenGui:Destroy()
@@ -211,28 +267,33 @@ function YUUGTRL:CreateWindow(title, size)
         Elements = {}
     }
     
-    function windowObj:AddButton(text, callback)
+    function windowObj:AddButton(text, color, callback)
+        if not callback and type(color) == "function" then
+            callback = color
+            color = Color3.fromRGB(80, 100, 220)
+        end
+        
+        color = color or Color3.fromRGB(80, 100, 220)
+        
         local button = Instance.new("TextButton")
         button.Name = text .. "Button"
         button.Size = UDim2.new(1, -10, 0, isMobile and 35 or 40)
-        button.BackgroundColor3 = theme.primary
-        button.Text = text
-        button.TextColor3 = theme.text
-        button.Font = Enum.Font.GothamBold
-        button.TextSize = isMobile and 12 or 14
+        button.BackgroundColor3 = color
+        button.BaseColor = color
+        button.Text = ""
         button.Parent = self.Container
         
         createCorner(button, 10)
-        createGradient(button, 
-            Color3.fromRGB(theme.primary.R * 255 + 20, theme.primary.G * 255 + 20, theme.primary.B * 255 + 20),
-            theme.primary
-        )
+        createButtonGradient(button, color)
+        
+        local buttonText = createBrightText(button, text, isMobile and 12 or 14)
+        buttonText.Size = UDim2.new(1, 0, 1, 0)
         
         button.MouseButton1Click:Connect(function()
-            animateButton(button, true, theme.success, theme.primary)
+            animateButton(button, true, Color3.fromRGB(80, 180, 120), color)
             if callback then callback() end
             task.wait(0.2)
-            animateButton(button, false, theme.success, theme.primary)
+            animateButton(button, false, Color3.fromRGB(80, 180, 120), color)
         end)
         
         table.insert(self.Elements, button)
@@ -246,36 +307,42 @@ function YUUGTRL:CreateWindow(title, size)
         frame.BackgroundTransparency = 1
         frame.Parent = self.Container
         
-        local label = Instance.new("TextLabel")
-        label.Name = "Label"
+        local label = createBrightText(frame, text, isMobile and 12 or 14)
         label.Size = UDim2.new(0.7, 0, 1, 0)
-        label.BackgroundTransparency = 1
-        label.Text = text
-        label.TextColor3 = theme.textSecondary
-        label.Font = Enum.Font.Gotham
-        label.TextSize = isMobile and 12 or 14
+        label.TextColor3 = Color3.fromRGB(220, 220, 255)
         label.TextXAlignment = Enum.TextXAlignment.Left
-        label.Parent = frame
         
         local toggleButton = Instance.new("TextButton")
         toggleButton.Name = "ToggleButton"
         toggleButton.Size = UDim2.new(0, isMobile and 50 or 60, 0, isMobile and 25 or 30)
         toggleButton.Position = UDim2.new(1, -(isMobile and 55 or 65), 0.5, -(isMobile and 12.5 or 15))
-        toggleButton.BackgroundColor3 = default and theme.success or theme.danger
-        toggleButton.Text = default and "ON" or "OFF"
-        toggleButton.TextColor3 = theme.text
-        toggleButton.Font = Enum.Font.GothamBold
-        toggleButton.TextSize = isMobile and 10 or 12
+        toggleButton.BackgroundColor3 = default and Color3.fromRGB(80, 180, 120) or Color3.fromRGB(200, 70, 70)
+        toggleButton.BaseColor = toggleButton.BackgroundColor3
+        toggleButton.Text = ""
         toggleButton.Parent = frame
         
         createCorner(toggleButton, 15)
+        createButtonGradient(toggleButton, toggleButton.BackgroundColor3)
+        
+        local toggleText = createBrightText(toggleButton, default and "ON" or "OFF", isMobile and 10 or 12)
+        toggleText.Size = UDim2.new(1, 0, 1, 0)
         
         local toggled = default or false
         
         toggleButton.MouseButton1Click:Connect(function()
             toggled = not toggled
-            toggleButton.Text = toggled and "ON" or "OFF"
-            animateButton(toggleButton, toggled, theme.success, theme.danger)
+            toggleText.Text = toggled and "ON" or "OFF"
+            local newColor = toggled and Color3.fromRGB(80, 180, 120) or Color3.fromRGB(200, 70, 70)
+            toggleButton.BackgroundColor3 = newColor
+            toggleButton.BaseColor = newColor
+            
+            for _, child in pairs(toggleButton:GetChildren()) do
+                if child:IsA("UIGradient") then
+                    child:Destroy()
+                end
+            end
+            createButtonGradient(toggleButton, newColor)
+            
             if callback then callback(toggled) end
         end)
         
@@ -290,16 +357,10 @@ function YUUGTRL:CreateWindow(title, size)
         frame.BackgroundTransparency = 1
         frame.Parent = self.Container
         
-        local label = Instance.new("TextLabel")
-        label.Name = "Label"
+        local label = createBrightText(frame, text .. ": " .. tostring(default or min), isMobile and 11 or 13)
         label.Size = UDim2.new(1, 0, 0, isMobile and 20 or 25)
-        label.BackgroundTransparency = 1
-        label.Text = text .. ": " .. tostring(default or min)
-        label.TextColor3 = theme.textSecondary
-        label.Font = Enum.Font.Gotham
-        label.TextSize = isMobile and 11 or 13
+        label.TextColor3 = Color3.fromRGB(220, 220, 255)
         label.TextXAlignment = Enum.TextXAlignment.Left
-        label.Parent = frame
         
         local sliderBg = Instance.new("Frame")
         sliderBg.Name = "SliderBg"
@@ -314,22 +375,24 @@ function YUUGTRL:CreateWindow(title, size)
         local fill = Instance.new("Frame")
         fill.Name = "Fill"
         fill.Size = UDim2.new((default or min) / max, 0, 1, 0)
-        fill.BackgroundColor3 = theme.primary
+        fill.BackgroundColor3 = Color3.fromRGB(80, 100, 220)
         fill.BorderSizePixel = 0
         fill.Parent = sliderBg
         
         createCorner(fill, 10)
+        createButtonGradient(fill, Color3.fromRGB(80, 100, 220))
         
         local button = Instance.new("TextButton")
         button.Name = "DragButton"
         button.Size = UDim2.new(0, isMobile and 16 or 20, 0, isMobile and 16 or 20)
         button.Position = UDim2.new((default or min) / max, -(isMobile and 8 or 10), 0.5, -(isMobile and 8 or 10))
-        button.BackgroundColor3 = theme.text
+        button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         button.Text = ""
         button.BorderSizePixel = 0
         button.Parent = sliderBg
         
         createCorner(button, 10)
+        createButtonGradient(button, Color3.fromRGB(255, 255, 255))
         
         local value = default or min
         local dragging = false
@@ -365,264 +428,15 @@ function YUUGTRL:CreateWindow(title, size)
         return sliderBg
     end
     
-    function windowObj:AddDropdown(text, options, callback)
-        local frame = Instance.new("Frame")
-        frame.Name = text .. "Dropdown"
-        frame.Size = UDim2.new(1, -10, 0, isMobile and 35 or 40)
-        frame.BackgroundTransparency = 1
-        frame.Parent = self.Container
-        
-        local button = Instance.new("TextButton")
-        button.Name = "DropdownButton"
-        button.Size = UDim2.new(1, 0, 1, 0)
-        button.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-        button.Text = text .. " ▼"
-        button.TextColor3 = theme.textSecondary
-        button.Font = Enum.Font.Gotham
-        button.TextSize = isMobile and 11 or 13
-        button.Parent = frame
-        
-        createCorner(button, 10)
-        
-        local dropdownFrame = Instance.new("Frame")
-        dropdownFrame.Name = "DropdownFrame"
-        dropdownFrame.Size = UDim2.new(1, 0, 0, #options * (isMobile and 30 or 35))
-        dropdownFrame.Position = UDim2.new(0, 0, 1, 5)
-        dropdownFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-        dropdownFrame.BorderSizePixel = 0
-        dropdownFrame.Visible = false
-        dropdownFrame.Parent = frame
-        
-        createCorner(dropdownFrame, 8)
-        createShadow(dropdownFrame)
-        
-        local dropdownList = Instance.new("ScrollingFrame")
-        dropdownList.Size = UDim2.new(1, -10, 1, -10)
-        dropdownList.Position = UDim2.new(0, 5, 0, 5)
-        dropdownList.BackgroundTransparency = 1
-        dropdownList.BorderSizePixel = 0
-        dropdownList.ScrollBarThickness = 2
-        dropdownList.Parent = dropdownFrame
-        
-        local dropdownLayout = Instance.new("UIListLayout")
-        dropdownLayout.Padding = UDim.new(0, 2)
-        dropdownLayout.Parent = dropdownList
-        
-        for _, option in ipairs(options) do
-            local optionButton = Instance.new("TextButton")
-            optionButton.Name = option .. "Option"
-            optionButton.Size = UDim2.new(1, 0, 0, isMobile and 25 or 30)
-            optionButton.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-            optionButton.Text = option
-            optionButton.TextColor3 = theme.textSecondary
-            optionButton.Font = Enum.Font.Gotham
-            optionButton.TextSize = isMobile and 10 or 12
-            optionButton.Parent = dropdownList
-            
-            createCorner(optionButton, 6)
-            
-            optionButton.MouseButton1Click:Connect(function()
-                button.Text = option .. " ▼"
-                dropdownFrame.Visible = false
-                if callback then callback(option) end
-            end)
-        end
-        
-        button.MouseButton1Click:Connect(function()
-            dropdownFrame.Visible = not dropdownFrame.Visible
-        end)
-        
-        table.insert(self.Elements, {frame, dropdownFrame})
-        return dropdownFrame
-    end
-    
     function windowObj:AddLabel(text)
-        local label = Instance.new("TextLabel")
-        label.Name = "Label"
+        local label = createBrightText(self.Container, text, isMobile and 11 or 13)
         label.Size = UDim2.new(1, -10, 0, isMobile and 20 or 25)
-        label.BackgroundTransparency = 1
-        label.Text = text
-        label.TextColor3 = theme.textSecondary
-        label.Font = Enum.Font.Gotham
-        label.TextSize = isMobile and 11 or 13
+        label.TextColor3 = Color3.fromRGB(200, 200, 255)
         label.TextXAlignment = Enum.TextXAlignment.Left
         label.Parent = self.Container
         
         table.insert(self.Elements, label)
         return label
-    end
-    
-    function windowObj:AddTextBox(text, placeholder, callback)
-        local frame = Instance.new("Frame")
-        frame.Name = text .. "TextBox"
-        frame.Size = UDim2.new(1, -10, 0, isMobile and 35 or 40)
-        frame.BackgroundTransparency = 1
-        frame.Parent = self.Container
-        
-        local label = Instance.new("TextLabel")
-        label.Name = "Label"
-        label.Size = UDim2.new(0.3, 0, 1, 0)
-        label.BackgroundTransparency = 1
-        label.Text = text
-        label.TextColor3 = theme.textSecondary
-        label.Font = Enum.Font.Gotham
-        label.TextSize = isMobile and 11 or 13
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        label.Parent = frame
-        
-        local box = Instance.new("TextBox")
-        box.Name = "TextBox"
-        box.Size = UDim2.new(0.65, 0, 0, isMobile and 25 or 30)
-        box.Position = UDim2.new(0.35, 0, 0.5, -(isMobile and 12.5 or 15))
-        box.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-        box.PlaceholderText = placeholder or ""
-        box.PlaceholderColor3 = Color3.fromRGB(120, 120, 140)
-        box.Text = ""
-        box.TextColor3 = theme.text
-        box.Font = Enum.Font.Gotham
-        box.TextSize = isMobile and 10 or 12
-        box.ClearTextOnFocus = false
-        box.Parent = frame
-        
-        createCorner(box, 8)
-        
-        box.FocusLost:Connect(function(enterPressed)
-            if enterPressed and callback then
-                callback(box.Text)
-            end
-        end)
-        
-        table.insert(self.Elements, {frame, box})
-        return box
-    end
-    
-    function windowObj:AddTab(tabName)
-        local tabFrame = Instance.new("Frame")
-        tabFrame.Name = tabName .. "Tab"
-        tabFrame.Size = UDim2.new(1, 0, 1, 0)
-        tabFrame.BackgroundTransparency = 1
-        tabFrame.Visible = false
-        tabFrame.Parent = self.Container
-        
-        local tabLayout = Instance.new("UIListLayout")
-        tabLayout.Padding = UDim.new(0, isMobile and 4 or 6)
-        tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-        tabLayout.Parent = tabFrame
-        
-        local tabPadding = Instance.new("UIPadding")
-        tabPadding.PaddingTop = UDim.new(0, 5)
-        tabPadding.PaddingBottom = UDim.new(0, 5)
-        tabPadding.Parent = tabFrame
-        
-        local tabObj = {
-            Frame = tabFrame,
-            Layout = tabLayout,
-            Elements = {}
-        }
-        
-        function tabObj:AddButton(text, callback)
-            local btn = windowObj:AddButton(text, callback)
-            btn.Parent = tabFrame
-            table.insert(self.Elements, btn)
-            return btn
-        end
-        
-        function tabObj:AddToggle(text, default, callback)
-            local tog = windowObj:AddToggle(text, default, callback)
-            tog.Parent = tabFrame
-            table.insert(self.Elements, tog)
-            return tog
-        end
-        
-        function tabObj:AddSlider(text, min, max, default, callback)
-            local slid = windowObj:AddSlider(text, min, max, default, callback)
-            slid.Parent = tabFrame
-            table.insert(self.Elements, slid)
-            return slid
-        end
-        
-        function tabObj:AddLabel(text)
-            local lbl = windowObj:AddLabel(text)
-            lbl.Parent = tabFrame
-            table.insert(self.Elements, lbl)
-            return lbl
-        end
-        
-        function tabObj:AddDropdown(text, options, callback)
-            local drop = windowObj:AddDropdown(text, options, callback)
-            drop.Parent = tabFrame
-            table.insert(self.Elements, drop)
-            return drop
-        end
-        
-        function tabObj:AddTextBox(text, placeholder, callback)
-            local txt = windowObj:AddTextBox(text, placeholder, callback)
-            txt.Parent = tabFrame
-            table.insert(self.Elements, txt)
-            return txt
-        end
-        
-        table.insert(self.Elements, tabFrame)
-        return tabObj
-    end
-    
-    function windowObj:AddTabBar(tabs)
-        local barFrame = Instance.new("Frame")
-        barFrame.Name = "TabBar"
-        barFrame.Size = UDim2.new(1, -10, 0, isMobile and 35 or 40)
-        barFrame.BackgroundTransparency = 1
-        barFrame.Parent = self.Container
-        
-        local barLayout = Instance.new("UIListLayout")
-        barLayout.FillDirection = Enum.FillDirection.Horizontal
-        barLayout.Padding = UDim.new(0, 5)
-        barLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-        barLayout.Parent = barFrame
-        
-        local tabObjects = {}
-        local currentTab = nil
-        
-        for i, tabName in ipairs(tabs) do
-            local tabButton = Instance.new("TextButton")
-            tabButton.Name = tabName .. "TabButton"
-            tabButton.Size = UDim2.new(0, (self.Container.AbsoluteSize.X - 30) / #tabs, 0, isMobile and 30 or 35)
-            tabButton.BackgroundColor3 = theme.primary
-            tabButton.Text = tabName
-            tabButton.TextColor3 = theme.text
-            tabButton.Font = Enum.Font.GothamBold
-            tabButton.TextSize = isMobile and 10 or 12
-            tabButton.Parent = barFrame
-            
-            createCorner(tabButton, 8)
-            
-            local tabContent = self:AddTab(tabName)
-            tabContent.Frame.Position = UDim2.new(0, 0, 0, barFrame.Size.Y.Offset + 10)
-            
-            if i == 1 then
-                tabContent.Frame.Visible = true
-                tabButton.BackgroundColor3 = theme.secondary
-                currentTab = tabContent
-            end
-            
-            tabButton.MouseButton1Click:Connect(function()
-                if currentTab then
-                    currentTab.Frame.Visible = false
-                end
-                for _, btn in ipairs(barFrame:GetChildren()) do
-                    if btn:IsA("TextButton") then
-                        btn.BackgroundColor3 = theme.primary
-                    end
-                end
-                tabButton.BackgroundColor3 = theme.secondary
-                tabContent.Frame.Visible = true
-                currentTab = tabContent
-            end)
-            
-            table.insert(tabObjects, {Button = tabButton, Content = tabContent})
-        end
-        
-        table.insert(self.Elements, barFrame)
-        return tabObjects
     end
     
     function windowObj:Destroy()
@@ -646,38 +460,32 @@ function YUUGTRL:CreateNotification(title, message, duration)
     frame.Name = "Notification"
     frame.Size = isMobile and UDim2.new(0, 250, 0, 80) or UDim2.new(0, 300, 0, 100)
     frame.Position = UDim2.new(0.5, -150, 0, -100)
-    frame.BackgroundColor3 = theme.background
+    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
     frame.BorderSizePixel = 0
     frame.Parent = notifGui
     
     createShadow(frame)
     createCorner(frame, 16)
-    createGradient(frame)
     
-    local titleLabel = Instance.new("TextLabel")
-    titleLabel.Name = "Title"
+    local frameGradient = Instance.new("UIGradient")
+    frameGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 50)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 25, 35))
+    })
+    frameGradient.Rotation = 45
+    frameGradient.Parent = frame
+    
+    local titleLabel = createBrightText(frame, title, isMobile and 14 or 16)
     titleLabel.Size = UDim2.new(1, -20, 0, isMobile and 25 or 30)
     titleLabel.Position = UDim2.new(0, 10, 0, 10)
-    titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = title
-    titleLabel.TextColor3 = theme.text
-    titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.TextSize = isMobile and 14 or 16
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    titleLabel.Parent = frame
     
-    local messageLabel = Instance.new("TextLabel")
-    messageLabel.Name = "Message"
+    local messageLabel = createBrightText(frame, message, isMobile and 11 or 13)
     messageLabel.Size = UDim2.new(1, -20, 0, isMobile and 30 or 35)
     messageLabel.Position = UDim2.new(0, 10, 0, isMobile and 35 or 40)
-    messageLabel.BackgroundTransparency = 1
-    messageLabel.Text = message
-    messageLabel.TextColor3 = theme.textSecondary
-    messageLabel.Font = Enum.Font.Gotham
-    messageLabel.TextSize = isMobile and 11 or 13
+    messageLabel.TextColor3 = Color3.fromRGB(220, 220, 255)
     messageLabel.TextWrapped = true
     messageLabel.TextXAlignment = Enum.TextXAlignment.Left
-    messageLabel.Parent = frame
     
     local tween = TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
         Position = UDim2.new(0.5, -150, 0, 20)
@@ -693,12 +501,6 @@ function YUUGTRL:CreateNotification(title, message, duration)
     tweenOut.Completed:Connect(function()
         notifGui:Destroy()
     end)
-end
-
-function YUUGTRL:SetTheme(newTheme)
-    for key, value in pairs(newTheme) do
-        theme[key] = value
-    end
 end
 
 function YUUGTRL:IsMobile()
