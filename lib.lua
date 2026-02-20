@@ -251,6 +251,17 @@ function YUUGTRL:CreateWindow(title, size, options)
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
     titleLabel.Parent = header
     
+    local windowObj = {
+        ScreenGui = screenGui,
+        MainFrame = mainFrame,
+        Header = header,
+        Container = nil,
+        Layout = nil,
+        Elements = {},
+        CloseButton = nil,
+        SettingsButton = nil
+    }
+    
     if options.ShowClose ~= false then
         local closeButton = Instance.new("TextButton")
         closeButton.Name = "CloseButton"
@@ -259,10 +270,11 @@ function YUUGTRL:CreateWindow(title, size, options)
         closeButton.BackgroundColor3 = options.CloseColor or Color3.fromRGB(200, 70, 70)
         closeButton.Text = ""
         closeButton.Parent = header
+        closeButton.AutoButtonColor = false
         
         createCorner(closeButton, 6)
         createButtonGradient(closeButton, closeButton.BackgroundColor3, false)
-        createButtonText(closeButton, "×", closeButton.BackgroundColor3, isMobile and 14 or 15, false)
+        local closeText = createButtonText(closeButton, "×", closeButton.BackgroundColor3, isMobile and 14 or 15, false)
         
         closeButton.MouseButton1Down:Connect(function()
             createButtonGradient(closeButton, closeButton.BackgroundColor3, true)
@@ -290,10 +302,11 @@ function YUUGTRL:CreateWindow(title, size, options)
         settingsButton.BackgroundColor3 = options.SettingsColor or Color3.fromRGB(80, 100, 220)
         settingsButton.Text = ""
         settingsButton.Parent = header
+        settingsButton.AutoButtonColor = false
         
         createCorner(settingsButton, 6)
         createButtonGradient(settingsButton, settingsButton.BackgroundColor3, false)
-        createButtonText(settingsButton, "⚙", settingsButton.BackgroundColor3, isMobile and 14 or 15, false)
+        local settingsText = createButtonText(settingsButton, "⚙", settingsButton.BackgroundColor3, isMobile and 14 or 15, false)
         
         settingsButton.MouseButton1Down:Connect(function()
             createButtonGradient(settingsButton, settingsButton.BackgroundColor3, true)
@@ -344,14 +357,8 @@ function YUUGTRL:CreateWindow(title, size, options)
     padding.PaddingBottom = UDim.new(0, 3)
     padding.Parent = scrollingFrame
     
-    local windowObj = {
-        ScreenGui = screenGui,
-        MainFrame = mainFrame,
-        Header = header,
-        Container = scrollingFrame,
-        Layout = listLayout,
-        Elements = {}
-    }
+    windowObj.Container = scrollingFrame
+    windowObj.Layout = listLayout
     
     function windowObj:AddButton(text, color, callback, toggleMode)
         if not callback and type(color) == "function" then
@@ -419,9 +426,9 @@ function YUUGTRL:CreateWindow(title, size, options)
         
         table.insert(self.Elements, button)
         
-        self.Container.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 6)
-        listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            self.Container.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 6)
+        self.Container.CanvasSize = UDim2.new(0, 0, 0, self.Layout.AbsoluteContentSize.Y + 6)
+        self.Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            self.Container.CanvasSize = UDim2.new(0, 0, 0, self.Layout.AbsoluteContentSize.Y + 6)
         end)
         
         return button
@@ -481,7 +488,7 @@ function YUUGTRL:CreateWindow(title, size, options)
         
         table.insert(self.Elements, {frame, toggleButton})
         
-        self.Container.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 6)
+        self.Container.CanvasSize = UDim2.new(0, 0, 0, self.Layout.AbsoluteContentSize.Y + 6)
         
         return toggleButton
     end
@@ -580,7 +587,7 @@ function YUUGTRL:CreateWindow(title, size, options)
         
         table.insert(self.Elements, {frame, sliderBg})
         
-        self.Container.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 6)
+        self.Container.CanvasSize = UDim2.new(0, 0, 0, self.Layout.AbsoluteContentSize.Y + 6)
         
         return sliderBg
     end
@@ -598,7 +605,7 @@ function YUUGTRL:CreateWindow(title, size, options)
         
         table.insert(self.Elements, label)
         
-        self.Container.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 6)
+        self.Container.CanvasSize = UDim2.new(0, 0, 0, self.Layout.AbsoluteContentSize.Y + 6)
         
         return label
     end
@@ -633,6 +640,7 @@ function YUUGTRL:CreateWindow(title, size, options)
         button.Font = Enum.Font.GothamBold
         button.TextSize = isMobile and 10 or 11
         button.Parent = frame
+        button.AutoButtonColor = false
         
         createCorner(button, 6)
         createButtonGradient(button, Color3.fromRGB(45, 45, 55), false)
@@ -686,6 +694,7 @@ function YUUGTRL:CreateWindow(title, size, options)
             optionButton.Font = Enum.Font.GothamBold
             optionButton.TextSize = isMobile and 9 or 10
             optionButton.Parent = dropdownList
+            optionButton.AutoButtonColor = false
             
             createCorner(optionButton, 4)
             createButtonGradient(optionButton, Color3.fromRGB(45, 45, 55), false)
@@ -718,7 +727,7 @@ function YUUGTRL:CreateWindow(title, size, options)
         
         table.insert(self.Elements, {frame, dropdownFrame})
         
-        self.Container.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 6)
+        self.Container.CanvasSize = UDim2.new(0, 0, 0, self.Layout.AbsoluteContentSize.Y + 6)
         
         return dropdownFrame
     end
@@ -771,7 +780,7 @@ function YUUGTRL:CreateWindow(title, size, options)
         
         table.insert(self.Elements, {frame, box})
         
-        self.Container.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 6)
+        self.Container.CanvasSize = UDim2.new(0, 0, 0, self.Layout.AbsoluteContentSize.Y + 6)
         
         return box
     end
@@ -858,6 +867,7 @@ function YUUGTRL:CreateWindow(title, size, options)
             tabButton.Font = Enum.Font.GothamBold
             tabButton.TextSize = isMobile and 9 or 10
             tabButton.Parent = barFrame
+            tabButton.AutoButtonColor = false
             
             createCorner(tabButton, 6)
             createButtonGradient(tabButton, Color3.fromRGB(80, 100, 220), false)
@@ -951,6 +961,7 @@ function YUUGTRL:CreateWindow(title, size, options)
         settingsClose.BackgroundColor3 = Color3.fromRGB(200, 70, 70)
         settingsClose.Text = ""
         settingsClose.Parent = settingsHeader
+        settingsClose.AutoButtonColor = false
         
         createCorner(settingsClose, 6)
         createButtonGradient(settingsClose, Color3.fromRGB(200, 70, 70), false)
