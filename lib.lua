@@ -116,37 +116,6 @@ local function Create(props)
     return obj
 end
 
-local function SmoothTween(obj, properties, duration, easingStyle, easingDirection)
-    if not obj then return end
-    
-    local validProperties = {}
-    for prop, value in pairs(properties) do
-        if obj:IsA("UIGradient") and prop == "Color" then
-            pcall(function()
-                obj[prop] = value
-            end)
-        else
-            validProperties[prop] = value
-        end
-    end
-    
-    if next(validProperties) then
-        local success, err = pcall(function()
-            local tweenInfo = TweenInfo.new(duration or 0.3, easingStyle or Enum.EasingStyle.Quad, easingDirection or Enum.EasingDirection.Out)
-            local tween = TweenService:Create(obj, tweenInfo, validProperties)
-            tween:Play()
-            return tween
-        end)
-        if not success then
-            for prop, value in pairs(validProperties) do
-                pcall(function()
-                    obj[prop] = value
-                end)
-            end
-        end
-    end
-end
-
 function YUUGTRL:ApplyButtonStyle(button, color)
     if not button then return end
     for _, v in pairs(button:GetChildren()) do
@@ -196,7 +165,6 @@ function YUUGTRL:MakeButton(button, color, style)
     if not button then return end
     local btnColor = color or Color3.fromRGB(60, 100, 200)
     local btnStyle = style or "darken"
-    local toggled = false
     
     self:ApplyButtonStyle(button, btnColor)
     
@@ -215,14 +183,8 @@ function YUUGTRL:MakeButton(button, color, style)
             self:RestoreButtonStyle(button, btnColor) 
         end)
     elseif btnStyle == "toggle" then
-        button.MouseButton1Click:Connect(function()
-            toggled = not toggled
-            if toggled then
-                self:DarkenButton(button)
-            else
-                self:RestoreButtonStyle(button, btnColor)
-            end
-        end)
+        -- Toggle style НЕ МЕНЯЕТ toggled state автоматически
+        -- Просто применяет визуальный эффект
     elseif btnStyle == "hover" then
         button.MouseEnter:Connect(function() 
             self:LightenButton(button) 
