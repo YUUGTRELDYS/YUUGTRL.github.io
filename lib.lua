@@ -1,4 +1,3 @@
--- YUUGTRL Library v3.0 - ИСПРАВЛЕННАЯ
 local YUUGTRL = {}
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -109,7 +108,9 @@ function YUUGTRL:CreateWindow(title, size, options)
         MainFrame = mainFrame,
         Header = header,
         Container = nil,
-        Elements = {}
+        Elements = {},
+        CloseButton = nil,
+        SettingsButton = nil
     }
     
     if options.ShowClose ~= false then
