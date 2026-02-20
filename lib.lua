@@ -111,6 +111,14 @@ local function createCorner(parent, radius)
     return corner
 end
 
+local function createGradient(parent, from, to, rotation)
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, from), ColorSequenceKeypoint.new(1, to)})
+    gradient.Rotation = rotation or 90
+    gradient.Parent = parent
+    return gradient
+end
+
 local function createButtonGradient(button, baseColor)
     local r, g, b = baseColor.R, baseColor.G, baseColor.B
     local lighter = Color3.new(math.min(r * 1.3, 1), math.min(g * 1.3, 1), math.min(b * 1.3, 1))
@@ -206,14 +214,7 @@ function YUUGTRL:CreateWindow(title, size)
     
     createShadow(mainFrame)
     createCorner(mainFrame, 16)
-    
-    local windowGradient = Instance.new("UIGradient")
-    windowGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 50)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 25, 35))
-    })
-    windowGradient.Rotation = 45
-    windowGradient.Parent = mainFrame
+    createGradient(mainFrame, Color3.fromRGB(40, 40, 50), Color3.fromRGB(25, 25, 35), 45)
     
     local header = Instance.new("Frame")
     header.Name = "Header"
@@ -222,13 +223,7 @@ function YUUGTRL:CreateWindow(title, size)
     header.BorderSizePixel = 0
     header.Parent = mainFrame
     
-    local headerGradient = Instance.new("UIGradient")
-    headerGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(60, 60, 80)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 40, 55))
-    })
-    headerGradient.Parent = header
-    
+    createGradient(header, Color3.fromRGB(60, 60, 80), Color3.fromRGB(40, 40, 55))
     createCorner(header, 16)
     
     local titleLabel = Instance.new("TextLabel")
@@ -511,6 +506,226 @@ function YUUGTRL:CreateWindow(title, size)
         return credit
     end
     
+    function windowObj:CreateSettingsFrame()
+        local settingsFrame = Instance.new("Frame")
+        settingsFrame.Name = "SettingsFrame"
+        settingsFrame.Size = isMobile and UDim2.new(0, 250, 0, 180) or UDim2.new(0, 280, 0, 200)
+        settingsFrame.Position = UDim2.new(0.5, isMobile and -125 or -140, 0.5, isMobile and -90 or -100)
+        settingsFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+        settingsFrame.BorderSizePixel = 0
+        settingsFrame.Visible = false
+        settingsFrame.Parent = self.ScreenGui
+        
+        createShadow(settingsFrame)
+        createCorner(settingsFrame, 16)
+        createGradient(settingsFrame, Color3.fromRGB(40, 40, 50), Color3.fromRGB(25, 25, 35), 45)
+        
+        local settingsHeader = Instance.new("Frame")
+        settingsHeader.Name = "SettingsHeader"
+        settingsHeader.Size = UDim2.new(1, 0, 0, isMobile and 35 or 40)
+        settingsHeader.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+        settingsHeader.BorderSizePixel = 0
+        settingsHeader.Parent = settingsFrame
+        
+        createGradient(settingsHeader, Color3.fromRGB(60, 60, 80), Color3.fromRGB(40, 40, 55))
+        createCorner(settingsHeader, 16)
+        
+        local settingsTitle = Instance.new("TextLabel")
+        settingsTitle.Name = "SettingsTitle"
+        settingsTitle.Size = UDim2.new(1, -50, 1, 0)
+        settingsTitle.Position = UDim2.new(0, 15, 0, 0)
+        settingsTitle.BackgroundTransparency = 1
+        settingsTitle.Text = "Settings"
+        settingsTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+        settingsTitle.Font = Enum.Font.GothamBold
+        settingsTitle.TextSize = isMobile and 14 or 16
+        settingsTitle.TextXAlignment = Enum.TextXAlignment.Left
+        settingsTitle.Parent = settingsHeader
+        
+        local settingsClose = Instance.new("TextButton")
+        settingsClose.Name = "SettingsClose"
+        settingsClose.Size = UDim2.new(0, isMobile and 25 or 30, 0, isMobile and 25 or 30)
+        settingsClose.Position = UDim2.new(1, isMobile and -30 or -35, 0, isMobile and 5 or 5)
+        settingsClose.BackgroundColor3 = Color3.fromRGB(200, 70, 70)
+        settingsClose.Text = ""
+        settingsClose.Parent = settingsHeader
+        
+        createCorner(settingsClose, 8)
+        createButtonGradient(settingsClose, Color3.fromRGB(200, 70, 70))
+        createButtonText(settingsClose, "×", Color3.fromRGB(200, 70, 70), isMobile and 16 or 18)
+        
+        local settingsContainer = Instance.new("Frame")
+        settingsContainer.Name = "SettingsContainer"
+        settingsContainer.Size = UDim2.new(1, -20, 1, -(settingsHeader.Size.Y.Offset + 20))
+        settingsContainer.Position = UDim2.new(0, 10, 0, settingsHeader.Size.Y.Offset + 10)
+        settingsContainer.BackgroundTransparency = 1
+        settingsContainer.Parent = settingsFrame
+        
+        local settingsScrolling = Instance.new("ScrollingFrame")
+        settingsScrolling.Size = UDim2.new(1, 0, 1, 0)
+        settingsScrolling.BackgroundTransparency = 1
+        settingsScrolling.BorderSizePixel = 0
+        settingsScrolling.ScrollBarThickness = 4
+        settingsScrolling.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 130)
+        settingsScrolling.Parent = settingsContainer
+        settingsScrolling.CanvasSize = UDim2.new(0, 0, 0, 0)
+        
+        local settingsLayout = Instance.new("UIListLayout")
+        settingsLayout.Padding = UDim.new(0, isMobile and 4 or 6)
+        settingsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        settingsLayout.Parent = settingsScrolling
+        
+        local settingsPadding = Instance.new("UIPadding")
+        settingsPadding.PaddingTop = UDim.new(0, 5)
+        settingsPadding.PaddingBottom = UDim.new(0, 5)
+        settingsPadding.Parent = settingsScrolling
+        
+        makeDraggable(settingsFrame, settingsHeader)
+        
+        local settingsObj = {
+            Frame = settingsFrame,
+            Header = settingsHeader,
+            CloseButton = settingsClose,
+            Container = settingsScrolling,
+            Layout = settingsLayout
+        }
+        
+        function settingsObj:AddLabel(text)
+            local label = Instance.new("TextLabel")
+            label.Size = UDim2.new(1, -10, 0, isMobile and 20 or 25)
+            label.BackgroundTransparency = 1
+            label.Text = text
+            label.TextColor3 = Color3.fromRGB(200, 200, 255)
+            label.Font = Enum.Font.GothamBold
+            label.TextSize = isMobile and 11 or 13
+            label.TextXAlignment = Enum.TextXAlignment.Left
+            label.Parent = self.Container
+            
+            self.Container.CanvasSize = UDim2.new(0, 0, 0, self.Layout.AbsoluteContentSize.Y + 10)
+            self.Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                self.Container.CanvasSize = UDim2.new(0, 0, 0, self.Layout.AbsoluteContentSize.Y + 10)
+            end)
+            
+            return label
+        end
+        
+        function settingsObj:AddButton(text, color, callback)
+            if not callback and type(color) == "function" then
+                callback = color
+                color = Color3.fromRGB(80, 100, 220)
+            end
+            
+            color = color or Color3.fromRGB(80, 100, 220)
+            
+            local button = Instance.new("TextButton")
+            button.Name = text .. "Button"
+            button.Size = UDim2.new(1, -10, 0, isMobile and 30 or 35)
+            button.BackgroundColor3 = color
+            button.Text = ""
+            button.Parent = self.Container
+            button.AutoButtonColor = false
+            
+            createCorner(button, 10)
+            createButtonGradient(button, color)
+            createButtonText(button, text, color, isMobile and 11 or 13)
+            
+            button.MouseButton1Click:Connect(function()
+                if callback then callback() end
+            end)
+            
+            self.Container.CanvasSize = UDim2.new(0, 0, 0, self.Layout.AbsoluteContentSize.Y + 10)
+            
+            return button
+        end
+        
+        function settingsObj:AddSlider(text, min, max, default, callback)
+            local frame = Instance.new("Frame")
+            frame.Name = text .. "Slider"
+            frame.Size = UDim2.new(1, -10, 0, isMobile and 45 or 55)
+            frame.BackgroundTransparency = 1
+            frame.Parent = self.Container
+            
+            local label = Instance.new("TextLabel")
+            label.Size = UDim2.new(1, 0, 0, isMobile and 20 or 25)
+            label.BackgroundTransparency = 1
+            label.Text = text .. ": " .. tostring(default or min)
+            label.TextColor3 = Color3.fromRGB(220, 220, 255)
+            label.Font = Enum.Font.GothamBold
+            label.TextSize = isMobile and 11 or 13
+            label.TextXAlignment = Enum.TextXAlignment.Left
+            label.Parent = frame
+            
+            local sliderBg = Instance.new("Frame")
+            sliderBg.Name = "SliderBg"
+            sliderBg.Size = UDim2.new(1, 0, 0, isMobile and 16 or 20)
+            sliderBg.Position = UDim2.new(0, 0, 1, -(isMobile and 20 or 25))
+            sliderBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+            sliderBg.BorderSizePixel = 0
+            sliderBg.Parent = frame
+            
+            createCorner(sliderBg, 10)
+            
+            local fill = Instance.new("Frame")
+            fill.Name = "Fill"
+            fill.Size = UDim2.new((default or min) / max, 0, 1, 0)
+            fill.BackgroundColor3 = Color3.fromRGB(80, 100, 220)
+            fill.BorderSizePixel = 0
+            fill.Parent = sliderBg
+            
+            createCorner(fill, 10)
+            createButtonGradient(fill, Color3.fromRGB(80, 100, 220))
+            
+            local button = Instance.new("TextButton")
+            button.Name = "DragButton"
+            button.Size = UDim2.new(0, isMobile and 16 or 20, 0, isMobile and 16 or 20)
+            button.Position = UDim2.new((default or min) / max, -(isMobile and 8 or 10), 0.5, -(isMobile and 8 or 10))
+            button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            button.Text = ""
+            button.BorderSizePixel = 0
+            button.Parent = sliderBg
+            button.AutoButtonColor = false
+            
+            createCorner(button, 10)
+            createButtonGradient(button, Color3.fromRGB(255, 255, 255))
+            
+            local value = default or min
+            local dragging = false
+            
+            button.MouseButton1Down:Connect(function()
+                dragging = true
+            end)
+            
+            UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragging = false
+                end
+            end)
+            
+            UserInputService.InputChanged:Connect(function(input)
+                if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                    local mousePos = input.Position.X
+                    local sliderPos = sliderBg.AbsolutePosition.X
+                    local sliderSize = sliderBg.AbsoluteSize.X
+                    local relativePos = math.clamp((mousePos - sliderPos) / sliderSize, 0, 1)
+                    local newValue = min + (max - min) * relativePos
+                    newValue = math.floor(newValue * 100) / 100
+                    
+                    fill.Size = UDim2.new(relativePos, 0, 1, 0)
+                    button.Position = UDim2.new(relativePos, -(isMobile and 8 or 10), 0.5, -(isMobile and 8 or 10))
+                    label.Text = text .. ": " .. tostring(newValue)
+                    
+                    if callback then callback(newValue) end
+                end
+            end)
+            
+            self.Container.CanvasSize = UDim2.new(0, 0, 0, self.Layout.AbsoluteContentSize.Y + 10)
+            
+            return sliderBg
+        end
+        
+        return settingsObj
+    end
+    
     function windowObj:Destroy()
         screenGui:Destroy()
     end
@@ -540,14 +755,7 @@ function YUUGTRL:CreateNotification(title, message, duration)
     
     createShadow(frame)
     createCorner(frame, 16)
-    
-    local frameGradient = Instance.new("UIGradient")
-    frameGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 50)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 25, 35))
-    })
-    frameGradient.Rotation = 45
-    frameGradient.Parent = frame
+    createGradient(frame, Color3.fromRGB(40, 40, 50), Color3.fromRGB(25, 25, 35), 45)
     
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Size = UDim2.new(1, -20, 0, isMobile and 25 or 30)
