@@ -28,41 +28,6 @@ local closeStyles = {
     warning = {text = "⚠", color = Color3.fromRGB(255, 180, 0), hover = Color3.fromRGB(255, 220, 80)},
     lock = {text = "🔒", color = Color3.fromRGB(150, 150, 150), hover = Color3.fromRGB(200, 200, 200)},
     unlock = {text = "🔓", color = Color3.fromRGB(100, 200, 100), hover = Color3.fromRGB(140, 240, 140)},
-    search = {text = "🔍", color = Color3.fromRGB(100, 150, 200), hover = Color3.fromRGB(140, 190, 240)},
-    bell = {text = "🔔", color = Color3.fromRGB(255, 200, 0), hover = Color3.fromRGB(255, 230, 80)},
-    music = {text = "♪", color = Color3.fromRGB(200, 100, 200), hover = Color3.fromRGB(240, 140, 240)},
-    game = {text = "🎮", color = Color3.fromRGB(100, 200, 100), hover = Color3.fromRGB(140, 240, 140)},
-    phone = {text = "📱", color = Color3.fromRGB(80, 150, 200), hover = Color3.fromRGB(120, 190, 240)},
-    mail = {text = "✉", color = Color3.fromRGB(200, 150, 100), hover = Color3.fromRGB(240, 190, 140)},
-    cloud = {text = "☁", color = Color3.fromRGB(200, 200, 255), hover = Color3.fromRGB(230, 230, 255)},
-    sun = {text = "☀", color = Color3.fromRGB(255, 200, 0), hover = Color3.fromRGB(255, 240, 100)},
-    moon = {text = "☾", color = Color3.fromRGB(150, 150, 200), hover = Color3.fromRGB(190, 190, 240)},
-    drop = {text = "💧", color = Color3.fromRGB(80, 150, 255), hover = Color3.fromRGB(120, 190, 255)},
-    leaf = {text = "🍃", color = Color3.fromRGB(80, 200, 80), hover = Color3.fromRGB(120, 240, 120)},
-    flower = {text = "🌸", color = Color3.fromRGB(255, 150, 200), hover = Color3.fromRGB(255, 190, 230)},
-    cat = {text = "🐱", color = Color3.fromRGB(200, 150, 100), hover = Color3.fromRGB(240, 190, 140)},
-    dog = {text = "🐶", color = Color3.fromRGB(150, 100, 50), hover = Color3.fromRGB(190, 140, 90)},
-    fish = {text = "🐟", color = Color3.fromRGB(80, 150, 200), hover = Color3.fromRGB(120, 190, 240)},
-    bird = {text = "🐦", color = Color3.fromRGB(100, 150, 200), hover = Color3.fromRGB(140, 190, 240)},
-    dragon = {text = "🐉", color = Color3.fromRGB(200, 100, 0), hover = Color3.fromRGB(240, 140, 40)},
-    alien = {text = "👽", color = Color3.fromRGB(80, 200, 80), hover = Color3.fromRGB(120, 240, 120)},
-    robot = {text = "🤖", color = Color3.fromRGB(150, 150, 150), hover = Color3.fromRGB(200, 200, 200)},
-    clown = {text = "🤡", color = Color3.fromRGB(255, 100, 100), hover = Color3.fromRGB(255, 140, 140)},
-    devil = {text = "👿", color = Color3.fromRGB(200, 0, 0), hover = Color3.fromRGB(255, 50, 50)},
-    angel = {text = "👼", color = Color3.fromRGB(255, 255, 200), hover = Color3.fromRGB(255, 255, 230)},
-    santa = {text = "🎅", color = Color3.fromRGB(255, 100, 100), hover = Color3.fromRGB(255, 140, 140)},
-    pumpkin = {text = "🎃", color = Color3.fromRGB(255, 150, 0), hover = Color3.fromRGB(255, 190, 50)},
-    gift = {text = "🎁", color = Color3.fromRGB(200, 100, 100), hover = Color3.fromRGB(240, 140, 140)},
-    cake = {text = "🍰", color = Color3.fromRGB(255, 200, 150), hover = Color3.fromRGB(255, 230, 190)},
-    pizza = {text = "🍕", color = Color3.fromRGB(200, 100, 0), hover = Color3.fromRGB(240, 140, 40)},
-    burger = {text = "🍔", color = Color3.fromRGB(150, 100, 50), hover = Color3.fromRGB(190, 140, 90)},
-    fries = {text = "🍟", color = Color3.fromRGB(255, 200, 0), hover = Color3.fromRGB(255, 240, 80)},
-    coffee = {text = "☕", color = Color3.fromRGB(150, 100, 50), hover = Color3.fromRGB(190, 140, 90)},
-    beer = {text = "🍺", color = Color3.fromRGB(255, 200, 100), hover = Color3.fromRGB(255, 230, 140)},
-    wine = {text = "🍷", color = Color3.fromRGB(200, 50, 50), hover = Color3.fromRGB(240, 90, 90)},
-    cocktail = {text = "🍸", color = Color3.fromRGB(255, 150, 200), hover = Color3.fromRGB(255, 190, 230)},
-    sushi = {text = "🍣", color = Color3.fromRGB(200, 150, 150), hover = Color3.fromRGB(240, 190, 190)},
-    ramen = {text = "🍜", color = Color3.fromRGB(200, 150, 100), hover = Color3.fromRGB(240, 190, 140)}
 }
 
 local function showWatermark()
@@ -93,25 +58,6 @@ local function showWatermark()
     })
     gradient.Rotation = 45
     gradient.Parent = frame
-    
-    local outline = Instance.new("Frame")
-    outline.Size = UDim2.new(1, 4, 1, 4)
-    outline.Position = UDim2.new(0, -2, 0, -2)
-    outline.BackgroundTransparency = 1
-    outline.BorderSizePixel = 0
-    outline.Parent = frame
-    
-    local outlineCorner = Instance.new("UICorner")
-    outlineCorner.CornerRadius = UDim.new(0, 27)
-    outlineCorner.Parent = outline
-    
-    local outlineGradient = Instance.new("UIGradient")
-    outlineGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 200, 255))
-    })
-    outlineGradient.Rotation = 45
-    outlineGradient.Parent = outline
     
     local icon = Instance.new("TextLabel")
     icon.Size = UDim2.new(0, 50, 1, 0)
@@ -777,25 +723,6 @@ function YUUGLR:CreateNotification(text, duration, type)
     gradient.Rotation = 45
     gradient.Parent = frame
     
-    local outline = Instance.new("Frame")
-    outline.Size = UDim2.new(1, 4, 1, 4)
-    outline.Position = UDim2.new(0, -2, 0, -2)
-    outline.BackgroundTransparency = 1
-    outline.BorderSizePixel = 0
-    outline.Parent = frame
-    
-    local outlineCorner = Instance.new("UICorner")
-    outlineCorner.CornerRadius = UDim.new(0, 27)
-    outlineCorner.Parent = outline
-    
-    local outlineGradient = Instance.new("UIGradient")
-    outlineGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, color),
-        ColorSequenceKeypoint.new(1, Color3.new(color.R * 0.5, color.G * 0.5, color.B * 0.5))
-    })
-    outlineGradient.Rotation = 45
-    outlineGradient.Parent = outline
-    
     local iconLabel = Instance.new("TextLabel")
     iconLabel.Size = UDim2.new(0, 50, 1, 0)
     iconLabel.Position = UDim2.new(0, 10, 0, 0)
@@ -810,7 +737,7 @@ function YUUGLR:CreateNotification(text, duration, type)
     title.Size = UDim2.new(1, -80, 0, 30)
     title.Position = UDim2.new(0, 70, 0, 10)
     title.BackgroundTransparency = 1
-    title.Text = "YUUGLR LIBRARY"
+    title.Text = "YUUGLR"
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
     title.Font = Enum.Font.GothamBold
     title.TextSize = 20
@@ -828,13 +755,20 @@ function YUUGLR:CreateNotification(text, duration, type)
     message.TextXAlignment = Enum.TextXAlignment.Left
     message.Parent = frame
     
-    tweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Expo, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -175, 0, 30)}):Play()
+    local tweenInfo = TweenInfo.new(0.6, Enum.EasingStyle.Expo, Enum.EasingDirection.Out)
+    local goal = {Position = UDim2.new(0.5, -175, 0, 30)}
+    local tween = tweenService:Create(frame, tweenInfo, goal)
+    tween:Play()
     
     task.wait(duration)
     
-    tweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(0.5, -175, 0, -100)}):Play()
-    task.wait(0.3)
-    ScreenGui:Destroy()
+    local tweenInfo2 = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+    local goal2 = {Position = UDim2.new(0.5, -175, 0, -100)}
+    local tween2 = tweenService:Create(frame, tweenInfo2, goal2)
+    tween2:Play()
+    tween2.Completed:Connect(function()
+        ScreenGui:Destroy()
+    end)
 end
 
 function YUUGLR:GetCloseStyles()
