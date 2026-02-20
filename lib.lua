@@ -75,6 +75,11 @@ function YUUGTRL:ApplyButtonStyle(button, color)
     return button
 end
 
+function YUUGTRL:SetButtonColor(button, color)
+    self:ApplyButtonStyle(button, color)
+    button.BackgroundColor3 = color
+end
+
 function YUUGTRL:DarkenButton(button)
     if not button:FindFirstChild("UIGradient") then return end
     local gradient = button:FindFirstChild("UIGradient")
@@ -101,19 +106,20 @@ end
 function YUUGTRL:MakeButton(button, color, style)
     local btnColor = color or Color3.fromRGB(60, 100, 200)
     local btnStyle = style or "darken"
+    local toggled = false
+    local hovered = false
     
     self:ApplyButtonStyle(button, btnColor)
     
     if btnStyle == "darken" then
         button.MouseButton1Down:Connect(function() self:DarkenButton(button) end)
         button.MouseButton1Up:Connect(function() self:RestoreButtonStyle(button, btnColor) end)
-        button.MouseLeave:Connect(function() self:RestoreButtonStyle(button, btnColor) end)
+        button.MouseLeave:Connect(function() if not toggled then self:RestoreButtonStyle(button, btnColor) end end)
     elseif btnStyle == "lighten" then
         button.MouseButton1Down:Connect(function() self:LightenButton(button) end)
         button.MouseButton1Up:Connect(function() self:RestoreButtonStyle(button, btnColor) end)
-        button.MouseLeave:Connect(function() self:RestoreButtonStyle(button, btnColor) end)
+        button.MouseLeave:Connect(function() if not toggled then self:RestoreButtonStyle(button, btnColor) end end)
     elseif btnStyle == "toggle" then
-        local toggled = false
         button.MouseButton1Click:Connect(function()
             toggled = not toggled
             if toggled then
@@ -122,6 +128,30 @@ function YUUGTRL:MakeButton(button, color, style)
                 self:RestoreButtonStyle(button, btnColor)
             end
         end)
+    elseif btnStyle == "hover" then
+        button.MouseEnter:Connect(function() self:LightenButton(button) end)
+        button.MouseLeave:Connect(function() self:RestoreButtonStyle(button, btnColor) end)
+    elseif btnStyle == "hover-dark" then
+        button.MouseEnter:Connect(function() self:DarkenButton(button) end)
+        button.MouseLeave:Connect(function() self:RestoreButtonStyle(button, btnColor) end)
+    end
+    
+    function button:SetStyle(newStyle, newColor)
+        if newColor then
+            btnColor = newColor
+            self.BackgroundColor3 = btnColor
+        end
+        toggled = false
+        self:RestoreButtonStyle(button, btnColor)
+    end
+    
+    function button:SetToggled(state)
+        toggled = state
+        if toggled then
+            self:DarkenButton(button)
+        else
+            self:RestoreButtonStyle(button, btnColor)
+        end
     end
     
     return button
@@ -157,34 +187,13 @@ function YUUGTRL:CreateWindow(title, size, position)
     
     Create({type = "UICorner",CornerRadius = UDim.new(0, 8),Parent = Header})
     
-    local Title = Create({
-        type = "TextLabel",
-        Size = UDim2.new(1, -50, 1, 0),
-        Position = UDim2.new(0, 15, 0, 0),
-        BackgroundTransparency = 1,
-        Text = title or "YUUGTRL",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        Font = Enum.Font.GothamBold,
-        TextSize = 18,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = Header
-    })
+    local Title = self:CreateLabel(Header, title or "YUUGTRL", UDim2.new(0, 15, 0, 0), UDim2.new(1, -100, 1, 0))
+    Title.TextXAlignment = Enum.TextXAlignment.Left
     
-    local Close = Create({
-        type = "TextButton",
-        Size = UDim2.new(0, 30, 0, 30),
-        Position = UDim2.new(1, -35, 0, 5),
-        BackgroundColor3 = Color3.fromRGB(255, 50, 50),
-        Text = "X",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        Font = Enum.Font.GothamBold,
-        TextSize = 16,
-        Parent = Header
-    })
-    
-    Create({type = "UICorner",CornerRadius = UDim.new(0, 6),Parent = Close})
-    self:MakeButton(Close, Color3.fromRGB(255, 50, 50), "darken")
+    local Close = self:CreateButton(Header, "X", nil, Color3.fromRGB(255, 50, 50), UDim2.new(1, -70, 0, 5), UDim2.new(0, 30, 0, 30), "darken")
     Close.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+    
+    local CustomBtn = self:CreateButton(Header, "...", nil, Color3.fromRGB(80, 100, 220), UDim2.new(1, -35, 0, 5), UDim2.new(0, 30, 0, 30), "hover")
     
     ScreenGui.Parent = player:WaitForChild("PlayerGui")
     
@@ -221,7 +230,8 @@ function YUUGTRL:CreateWindow(title, size, position)
         Main = Main,
         Header = Header,
         Title = Title,
-        Close = Close
+        Close = Close,
+        CustomBtn = CustomBtn
     }
     
     function window:AddToHeader(instance, position, size)
@@ -234,10 +244,6 @@ function YUUGTRL:CreateWindow(title, size, position)
         instance.Parent = Main
         if position then instance.Position = position end
         if size then instance.Size = size end
-    end
-    
-    function window:SetDraggable(bool)
-        -- реализация если нужно отключить
     end
     
     function window:Destroy()
@@ -310,7 +316,7 @@ function YUUGTRL:CreateToggle(parent, text, default, callback, color, position, 
     self:CreateLabel(frame, text, UDim2.new(0, 10, 0, 0), UDim2.new(1, -50, 1, 0))
     
     local toggleColor = default and Color3.fromRGB(80, 220, 100) or Color3.fromRGB(220, 80, 80)
-    local toggleBtn = self:CreateButton(frame, "", nil, toggleColor, UDim2.new(1, -40, 0, 2.5), UDim2.new(0, 30, 0, 30), style)
+    local toggleBtn = self:CreateButton(frame, "", nil, toggleColor, UDim2.new(1, -40, 0, 2.5), UDim2.new(0, 30, 0, 30), style or "toggle")
     Create({type = "UICorner",CornerRadius = UDim.new(0, 15),Parent = toggleBtn})
     
     local toggled = default or false
