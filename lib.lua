@@ -84,14 +84,19 @@ function YUUGTRL:RegisterTranslatable(element, key)
 end
 
 function YUUGTRL:UpdateAllTexts()
-    for _, item in pairs(translatableElements) do
+    for i = #translatableElements, 1, -1 do
+        local item = translatableElements[i]
         if item.element and item.element.Parent then
             local newText = self:GetText(item.key)
             if newText then
-                if item.element:IsA("TextLabel") or item.element:IsA("TextButton") then
-                    item.element.Text = newText
-                end
+                pcall(function()
+                    if item.element:IsA("TextLabel") or item.element:IsA("TextButton") then
+                        item.element.Text = newText
+                    end
+                end)
             end
+        else
+            table.remove(translatableElements, i)
         end
     end
 end
@@ -112,13 +117,38 @@ local function Create(props)
 end
 
 local function SmoothTween(obj, properties, duration, easingStyle, easingDirection)
-    local tweenInfo = TweenInfo.new(duration or 0.3, easingStyle or Enum.EasingStyle.Quad, easingDirection or Enum.EasingDirection.Out)
-    local tween = TweenService:Create(obj, tweenInfo, properties)
-    tween:Play()
-    return tween
+    if not obj then return end
+    
+    local validProperties = {}
+    for prop, value in pairs(properties) do
+        if obj:IsA("UIGradient") and prop == "Color" then
+            pcall(function()
+                obj[prop] = value
+            end)
+        else
+            validProperties[prop] = value
+        end
+    end
+    
+    if next(validProperties) then
+        local success, err = pcall(function()
+            local tweenInfo = TweenInfo.new(duration or 0.3, easingStyle or Enum.EasingStyle.Quad, easingDirection or Enum.EasingDirection.Out)
+            local tween = TweenService:Create(obj, tweenInfo, validProperties)
+            tween:Play()
+            return tween
+        end)
+        if not success then
+            for prop, value in pairs(validProperties) do
+                pcall(function()
+                    obj[prop] = value
+                end)
+            end
+        end
+    end
 end
 
 function YUUGTRL:ApplyButtonStyle(button, color)
+    if not button then return end
     for _, v in pairs(button:GetChildren()) do
         if v:IsA("UIGradient") then
             v:Destroy()
@@ -136,62 +166,34 @@ function YUUGTRL:ApplyButtonStyle(button, color)
 end
 
 function YUUGTRL:DarkenButton(button)
-    if not button:FindFirstChild("UIGradient") then return end
+    if not button or not button:FindFirstChild("UIGradient") then return end
     local gradient = button:FindFirstChild("UIGradient")
     local color = gradient.Color.Keypoints[1].Value
     local darker = Color3.fromRGB(math.max(color.R * 255 - 90, 0), math.max(color.G * 255 - 90, 0), math.max(color.B * 255 - 90, 0))
-    SmoothTween(gradient, {Color = ColorSequence.new({ColorSequenceKeypoint.new(0, darker),ColorSequenceKeypoint.new(1, darker)})}, 0.15, Enum.EasingStyle.Quad)
-    SmoothTween(button, {TextColor3 = Color3.fromRGB(255, 255, 255)}, 0.15, Enum.EasingStyle.Quad)
+    gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, darker),ColorSequenceKeypoint.new(1, darker)})
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
 end
 
 function YUUGTRL:LightenButton(button)
-    if not button:FindFirstChild("UIGradient") then return end
+    if not button or not button:FindFirstChild("UIGradient") then return end
     local gradient = button:FindFirstChild("UIGradient")
     local color = gradient.Color.Keypoints[1].Value
     local lighter = Color3.fromRGB(math.min(color.R * 255 + 90, 255), math.min(color.G * 255 + 90, 255), math.min(color.B * 255 + 90, 255))
-    SmoothTween(gradient, {Color = ColorSequence.new({ColorSequenceKeypoint.new(0, lighter),ColorSequenceKeypoint.new(1, lighter)})}, 0.15, Enum.EasingStyle.Quad)
-    SmoothTween(button, {TextColor3 = Color3.fromRGB(255, 255, 255)}, 0.15, Enum.EasingStyle.Quad)
+    gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, lighter),ColorSequenceKeypoint.new(1, lighter)})
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
 end
 
 function YUUGTRL:RestoreButtonStyle(button, color)
-    if not button:FindFirstChild("UIGradient") then return end
+    if not button or not button:FindFirstChild("UIGradient") then return end
     local gradient = button:FindFirstChild("UIGradient")
     local darker = Color3.fromRGB(math.max(color.R * 255 - 50, 0), math.max(color.G * 255 - 50, 0), math.max(color.B * 255 - 50, 0))
     local brighter = Color3.fromRGB(math.min(color.R * 255 + 120, 255), math.min(color.G * 255 + 120, 255), math.min(color.B * 255 + 120, 255))
-    SmoothTween(gradient, {Color = ColorSequence.new({ColorSequenceKeypoint.new(0, color),ColorSequenceKeypoint.new(1, darker)})}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    SmoothTween(button, {TextColor3 = brighter}, 0.2, Enum.EasingStyle.Quad)
-end
-
-function YUUGTRL:PulseButton(button, color)
-    local originalColor = button.BackgroundColor3
-    local pulseColor = Color3.fromRGB(math.min(color.R * 255 + 50, 255), math.min(color.G * 255 + 50, 255), math.min(color.B * 255 + 50, 255))
-    
-    SmoothTween(button, {BackgroundColor3 = pulseColor}, 0.15, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-    task.wait(0.15)
-    SmoothTween(button, {BackgroundColor3 = originalColor}, 0.15, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-end
-
-function YUUGTRL:ShakeButton(button)
-    local originalPos = button.Position
-    local offset = UDim2.new(0, 5, 0, 0)
-    
-    SmoothTween(button, {Position = originalPos + offset}, 0.05, Enum.EasingStyle.Linear)
-    task.wait(0.05)
-    SmoothTween(button, {Position = originalPos - offset}, 0.05, Enum.EasingStyle.Linear)
-    task.wait(0.05)
-    SmoothTween(button, {Position = originalPos}, 0.05, Enum.EasingStyle.Linear)
-end
-
-function YUUGTRL:BounceButton(button)
-    local originalSize = button.Size
-    local largerSize = originalSize * 1.1
-    
-    SmoothTween(button, {Size = largerSize}, 0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    task.wait(0.1)
-    SmoothTween(button, {Size = originalSize}, 0.1, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+    gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, color),ColorSequenceKeypoint.new(1, darker)})
+    button.TextColor3 = brighter
 end
 
 function YUUGTRL:MakeButton(button, color, style)
+    if not button then return end
     local btnColor = color or Color3.fromRGB(60, 100, 200)
     local btnStyle = style or "darken"
     local toggled = false
@@ -235,41 +237,9 @@ function YUUGTRL:MakeButton(button, color, style)
         button.MouseLeave:Connect(function() 
             self:RestoreButtonStyle(button, btnColor) 
         end)
-    elseif btnStyle == "pulse" then
-        button.MouseButton1Click:Connect(function()
-            self:PulseButton(button, btnColor)
-        end)
-    elseif btnStyle == "shake" then
-        button.MouseButton1Click:Connect(function()
-            self:ShakeButton(button)
-        end)
-    elseif btnStyle == "bounce" then
-        button.MouseButton1Click:Connect(function()
-            self:BounceButton(button)
-        end)
-    elseif btnStyle == "glow" then
-        button.MouseEnter:Connect(function()
-            SmoothTween(button, {BackgroundColor3 = Color3.fromRGB(math.min(btnColor.R * 255 + 70, 255), math.min(btnColor.G * 255 + 70, 255), math.min(btnColor.B * 255 + 70, 255))}, 0.2)
-        end)
-        button.MouseLeave:Connect(function()
-            SmoothTween(button, {BackgroundColor3 = btnColor}, 0.2)
-        end)
     end
     
     return button
-end
-
-function YUUGTRL:FadeIn(element, duration)
-    SmoothTween(element, {BackgroundTransparency = 0}, duration or 0.3, Enum.EasingStyle.Quad)
-end
-
-function YUUGTRL:FadeOut(element, duration)
-    SmoothTween(element, {BackgroundTransparency = 1}, duration or 0.3, Enum.EasingStyle.Quad)
-end
-
-function YUUGTRL:SlideIn(element, fromPosition, toPosition, duration)
-    element.Position = fromPosition
-    SmoothTween(element, {Position = toPosition}, duration or 0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 end
 
 function YUUGTRL:CreateWindow(title, size, position, options)
@@ -277,7 +247,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     
     local ScreenGui = Create({
         type = "ScreenGui",
-        Name = "YUUGTRL_" .. title:gsub("%s+", ""),
+        Name = "YUUGTRL_" .. (title:gsub("%s+", "") or "Window"),
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
         DisplayOrder = 999,
         ResetOnSpawn = false,
@@ -322,8 +292,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     if options.ShowClose ~= false then
         CloseBtn = self:CreateButton(Header, "X", nil, options.CloseColor or Color3.fromRGB(255, 100, 100), UDim2.new(1, -35, 0, 5), UDim2.new(0, 30, 0, 30), "darken")
         CloseBtn.MouseButton1Click:Connect(function() 
-            SmoothTween(Main, {BackgroundTransparency = 1}, 0.3)
-            task.wait(0.3)
             ScreenGui:Destroy() 
         end)
     end
@@ -378,7 +346,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         local label = YUUGTRL:CreateLabel(self.Main, text, position, size, color)
         if translationKey then
             YUUGTRL:RegisterTranslatable(label, translationKey)
-            table.insert(self.elements, {type = "label", obj = label, key = translationKey})
         end
         return label
     end
@@ -387,7 +354,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         local btn = YUUGTRL:CreateButton(self.Main, text, callback, color, position, size, style)
         if translationKey then
             YUUGTRL:RegisterTranslatable(btn, translationKey)
-            table.insert(self.elements, {type = "button", obj = btn, key = translationKey})
         end
         return btn
     end
@@ -398,7 +364,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         local label = YUUGTRL:CreateLabel(frame, text, UDim2.new(0, 10, 0, 0), UDim2.new(1, -50, 1, 0))
         if translationKey then
             YUUGTRL:RegisterTranslatable(label, translationKey)
-            table.insert(self.elements, {type = "label", obj = label, key = translationKey})
         end
         
         local toggleColor = default and Color3.fromRGB(80, 220, 100) or Color3.fromRGB(220, 80, 80)
@@ -410,7 +375,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         toggleBtn.MouseButton1Click:Connect(function()
             toggled = not toggled
             local newColor = toggled and Color3.fromRGB(80, 220, 100) or Color3.fromRGB(220, 80, 80)
-            SmoothTween(toggleBtn, {BackgroundColor3 = newColor}, 0.2, Enum.EasingStyle.Bounce)
+            toggleBtn.BackgroundColor3 = newColor
             YUUGTRL:ApplyButtonStyle(toggleBtn, newColor)
             if callback then callback(toggled) end
         end)
@@ -435,21 +400,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     end
     
     function window:Destroy()
-        SmoothTween(Main, {BackgroundTransparency = 1}, 0.3)
-        task.wait(0.3)
         ScreenGui:Destroy()
-    end
-    
-    function window:FadeIn(duration)
-        YUUGTRL:FadeIn(Main, duration)
-    end
-    
-    function window:FadeOut(duration)
-        YUUGTRL:FadeOut(Main, duration)
-    end
-    
-    function window:SlideIn(fromPos, toPos, duration)
-        YUUGTRL:SlideIn(Main, fromPos, toPos, duration)
     end
     
     function window:UpdateLanguage()
@@ -460,6 +411,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
 end
 
 function YUUGTRL:CreateFrame(parent, size, position, color, radius)
+    if not parent then return end
     local frame = Create({
         type = "Frame",
         Size = size or UDim2.new(0, 100, 0, 100),
@@ -475,6 +427,7 @@ function YUUGTRL:CreateFrame(parent, size, position, color, radius)
 end
 
 function YUUGTRL:CreateScrollingFrame(parent, size, position, color, radius)
+    if not parent then return end
     local frame = Instance.new("ScrollingFrame")
     frame.Size = size or UDim2.new(0, 200, 0, 200)
     frame.Position = position or UDim2.new(0, 0, 0, 0)
@@ -497,6 +450,7 @@ function YUUGTRL:CreateScrollingFrame(parent, size, position, color, radius)
 end
 
 function YUUGTRL:CreateLabel(parent, text, position, size, color)
+    if not parent then return end
     return Create({
         type = "TextLabel",
         Size = size or UDim2.new(0, 100, 0, 30),
@@ -512,6 +466,7 @@ function YUUGTRL:CreateLabel(parent, text, position, size, color)
 end
 
 function YUUGTRL:CreateButton(parent, text, callback, color, position, size, style)
+    if not parent then return end
     local btn = Create({
         type = "TextButton",
         Size = size or UDim2.new(0, 100, 0, 35),
@@ -534,29 +489,8 @@ function YUUGTRL:CreateButton(parent, text, callback, color, position, size, sty
     return btn
 end
 
-function YUUGTRL:CreateToggle(parent, text, default, callback, color, position, size)
-    local frame = self:CreateFrame(parent, size or UDim2.new(0, 200, 0, 35), position, Color3.fromRGB(45, 45, 55), 8)
-    
-    local label = self:CreateLabel(frame, text, UDim2.new(0, 10, 0, 0), UDim2.new(1, -50, 1, 0))
-    
-    local toggleColor = default and Color3.fromRGB(80, 220, 100) or Color3.fromRGB(220, 80, 80)
-    local toggleBtn = self:CreateButton(frame, "", nil, toggleColor, UDim2.new(1, -40, 0, 2.5), UDim2.new(0, 30, 0, 30), "toggle")
-    Create({type = "UICorner",CornerRadius = UDim.new(0, 15),Parent = toggleBtn})
-    
-    local toggled = default or false
-    
-    toggleBtn.MouseButton1Click:Connect(function()
-        toggled = not toggled
-        local newColor = toggled and Color3.fromRGB(80, 220, 100) or Color3.fromRGB(220, 80, 80)
-        SmoothTween(toggleBtn, {BackgroundColor3 = newColor}, 0.2, Enum.EasingStyle.Bounce)
-        self:ApplyButtonStyle(toggleBtn, newColor)
-        if callback then callback(toggled) end
-    end)
-    
-    return toggleBtn
-end
-
 function YUUGTRL:CreateSlider(parent, text, min, max, default, callback, position, size)
+    if not parent then return end
     local frame = self:CreateFrame(parent, size or UDim2.new(0, 200, 0, 50), position, Color3.fromRGB(45, 45, 55), 8)
     
     self:CreateLabel(frame, text or "", UDim2.new(0, 10, 0, 5), UDim2.new(1, -60, 0, 20))
@@ -588,7 +522,7 @@ function YUUGTRL:CreateSlider(parent, text, min, max, default, callback, positio
             local size = slider.AbsoluteSize.X
             local percent = math.clamp(pos / size, 0, 1)
             local value = math.floor(min + (max - min) * percent)
-            SmoothTween(fill, {Size = UDim2.new(percent, 0, 1, 0)}, 0.1, Enum.EasingStyle.Quad)
+            fill.Size = UDim2.new(percent, 0, 1, 0)
             valueLabel.Text = tostring(value)
             if callback then callback(value) end
         end
