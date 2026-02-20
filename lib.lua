@@ -64,7 +64,7 @@ local function showLoadMessage()
     versionText.Size = UDim2.new(0, 50, 1, 0)
     versionText.Position = UDim2.new(1, -60, 0, 0)
     versionText.BackgroundTransparency = 1
-    versionText.Text = "v1.0"
+    versionText.Text = "v2.0"
     versionText.TextColor3 = Color3.fromRGB(80, 100, 220)
     versionText.Font = Enum.Font.GothamBold
     versionText.TextSize = isMobile and 10 or 12
@@ -232,11 +232,12 @@ function YUUGTRL:CreateWindow(title, size)
     createCorner(header, 16)
     
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, -60, 1, 0)
+    titleLabel.Name = "Title"
+    titleLabel.Size = UDim2.new(1, -90, 1, 0)
     titleLabel.Position = UDim2.new(0, 12, 0, 0)
     titleLabel.BackgroundTransparency = 1
     titleLabel.Text = title
-    titleLabel.TextColor3 = Color3.fromRGB(220, 220, 255)
+    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     titleLabel.Font = Enum.Font.GothamBold
     titleLabel.TextSize = isMobile and 14 or 18
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -254,9 +255,17 @@ function YUUGTRL:CreateWindow(title, size)
     createButtonGradient(closeButton, Color3.fromRGB(200, 70, 70))
     createButtonText(closeButton, "×", Color3.fromRGB(200, 70, 70), isMobile and 16 or 20)
     
-    closeButton.MouseButton1Click:Connect(function()
-        screenGui:Destroy()
-    end)
+    local settingsButton = Instance.new("TextButton")
+    settingsButton.Name = "SettingsButton"
+    settingsButton.Size = UDim2.new(0, isMobile and 26 or 32, 0, isMobile and 26 or 32)
+    settingsButton.Position = UDim2.new(1, isMobile and -60 or -75, 0, isMobile and 4 or 6)
+    settingsButton.BackgroundColor3 = Color3.fromRGB(80, 100, 220)
+    settingsButton.Text = ""
+    settingsButton.Parent = header
+    
+    createCorner(settingsButton, 8)
+    createButtonGradient(settingsButton, Color3.fromRGB(80, 100, 220))
+    createButtonText(settingsButton, "⚙", Color3.fromRGB(80, 100, 220), isMobile and 16 or 20)
     
     makeDraggable(mainFrame, header)
     
@@ -268,6 +277,7 @@ function YUUGTRL:CreateWindow(title, size)
     container.Parent = mainFrame
     
     local scrollingFrame = Instance.new("ScrollingFrame")
+    scrollingFrame.Name = "ScrollingFrame"
     scrollingFrame.Size = UDim2.new(1, 0, 1, 0)
     scrollingFrame.BackgroundTransparency = 1
     scrollingFrame.BorderSizePixel = 0
@@ -291,6 +301,9 @@ function YUUGTRL:CreateWindow(title, size)
     local windowObj = {
         ScreenGui = screenGui,
         MainFrame = mainFrame,
+        Header = header,
+        CloseButton = closeButton,
+        SettingsButton = settingsButton,
         Container = scrollingFrame,
         Layout = listLayout,
         Elements = {}
@@ -482,6 +495,20 @@ function YUUGTRL:CreateWindow(title, size)
         self.Container.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 10)
         
         return label
+    end
+    
+    function windowObj:AddCredit(text, color)
+        local credit = Instance.new("TextLabel")
+        credit.Size = UDim2.new(1, -20, 0, 15)
+        credit.Position = UDim2.new(0, 10, 1, -20)
+        credit.BackgroundTransparency = 1
+        credit.Text = text
+        credit.TextColor3 = color or Color3.fromRGB(170, 85, 255)
+        credit.Font = Enum.Font.GothamBold
+        credit.TextSize = 11
+        credit.TextXAlignment = Enum.TextXAlignment.Right
+        credit.Parent = self.MainFrame
+        return credit
     end
     
     function windowObj:Destroy()
