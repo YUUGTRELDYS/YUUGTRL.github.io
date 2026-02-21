@@ -570,4 +570,177 @@ function YUUGTRL:CreateSlider(parent, text, min, max, default, callback, positio
     return slider
 end
 
+-- Toggle функции
+function YUUGTRL:CreateToggle(parent, text, default, callback, position, size, colors)
+    if not parent then return end
+    
+    colors = colors or {}
+    local toggleState = default or false
+    local toggleColor = colors.toggleOn or Color3.fromRGB(80, 200, 120)
+    local toggleOffColor = colors.toggleOff or Color3.fromRGB(100, 100, 100)
+    local knobColor = colors.knob or Color3.fromRGB(255, 255, 255)
+    local textColor = colors.text or Color3.fromRGB(255, 255, 255)
+    
+    local frame = self:CreateFrame(parent, 
+        size or UDim2.new(0, 200, 0, 35), 
+        position or UDim2.new(0, 0, 0, 0), 
+        Color3.fromRGB(45, 45, 55), 
+        8
+    )
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -50, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text or "Toggle"
+    label.TextColor3 = textColor
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 14
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+    
+    local toggleBg = Instance.new("Frame")
+    toggleBg.Size = UDim2.new(0, 40, 0, 20)
+    toggleBg.Position = UDim2.new(1, -45, 0.5, -10)
+    toggleBg.BackgroundColor3 = toggleOffColor
+    toggleBg.BackgroundTransparency = 0
+    toggleBg.BorderSizePixel = 0
+    toggleBg.Parent = frame
+    
+    local toggleCorner = Instance.new("UICorner")
+    toggleCorner.CornerRadius = UDim.new(1, 0)
+    toggleCorner.Parent = toggleBg
+    
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0, 16, 0, 16)
+    knob.Position = toggleState and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+    knob.BackgroundColor3 = knobColor
+    knob.BackgroundTransparency = 0
+    knob.BorderSizePixel = 0
+    knob.Parent = toggleBg
+    
+    local knobCorner = Instance.new("UICorner")
+    knobCorner.CornerRadius = UDim.new(1, 0)
+    knobCorner.Parent = knob
+    
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(1, 0, 1, 0)
+    button.BackgroundTransparency = 1
+    button.Text = ""
+    button.Parent = frame
+    
+    local function updateToggle(state)
+        toggleState = state
+        toggleBg.BackgroundColor3 = state and toggleColor or toggleOffColor
+        
+        local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local targetPos = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+        local tween = TweenService:Create(knob, tweenInfo, {Position = targetPos})
+        tween:Play()
+        
+        if callback then
+            pcall(callback, state)
+        end
+    end
+    
+    button.MouseButton1Click:Connect(function()
+        updateToggle(not toggleState)
+    end)
+    
+    button.TouchTap:Connect(function()
+        updateToggle(not toggleState)
+    end)
+    
+    button.MouseEnter:Connect(function()
+        TweenService:Create(frame, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(55, 55, 65)}):Play()
+    end)
+    
+    button.MouseLeave:Connect(function()
+        TweenService:Create(frame, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(45, 45, 55)}):Play()
+    end)
+    
+    local toggle = {
+        frame = frame,
+        label = label,
+        toggleBg = toggleBg,
+        knob = knob,
+        button = button
+    }
+    
+    function toggle:SetState(state)
+        updateToggle(state)
+    end
+    
+    function toggle:GetState()
+        return toggleState
+    end
+    
+    function toggle:Toggle()
+        updateToggle(not toggleState)
+    end
+    
+    function toggle:SetColors(newColors)
+        if newColors.toggleOn then
+            toggleColor = newColors.toggleOn
+            if toggleState then
+                toggleBg.BackgroundColor3 = toggleColor
+            end
+        end
+        if newColors.toggleOff then
+            toggleOffColor = newColors.toggleOff
+            if not toggleState then
+                toggleBg.BackgroundColor3 = toggleOffColor
+            end
+        end
+        if newColors.knob then
+            knobColor = newColors.knob
+            knob.BackgroundColor3 = knobColor
+        end
+        if newColors.text then
+            textColor = newColors.text
+            label.TextColor3 = textColor
+        end
+    end
+    
+    function toggle:SetText(newText)
+        label.Text = newText
+    end
+    
+    function toggle:Destroy()
+        frame:Destroy()
+    end
+    
+    return toggle
+end
+
+local originalCreateWindow = YUUGTRL.CreateWindow
+YUUGTRL.CreateWindow = function(title, size, position, options)
+    local window = originalCreateWindow(title, size, position, options)
+    
+    function window:CreateToggle(text, default, callback, position, size, colors, translationKey)
+        local togglePos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
+        local toggleSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
+        
+        if colors then
+            colors = {
+                toggleOn = colors.toggleOn,
+                toggleOff = colors.toggleOff,
+                knob = colors.knob,
+                text = colors.text
+            }
+        end
+        
+        local toggle = YUUGTRL:CreateToggle(self.Main, text, default, callback, togglePos, toggleSize, colors)
+        
+        if translationKey then
+            YUUGTRL:RegisterTranslatable(toggle.label, translationKey)
+        end
+        
+        table.insert(self.elements, {type = "toggle", obj = toggle})
+        return toggle
+    end
+    
+    return window
+end
+
 return YUUGTRL
