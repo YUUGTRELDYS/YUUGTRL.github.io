@@ -593,7 +593,6 @@ function YUUGTRL:CreateTextBox(parent, placeholder, text, callback, position, si
     if not parent then return end
     
     local frameColor = color or currentTheme.InputColor
-    
     local textColor = currentTheme.TextColor
     
     local frame = self:CreateFrame(parent, size or UDim2.new(0, 200, 0, 35), position, frameColor, 8)
@@ -991,7 +990,9 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         Parent = ScreenGui
     })
     
-    Create({type = "UICorner",CornerRadius = UDim.new(0, 12 * scale),Parent = Main})
+    local mainCorner = Instance.new("UICorner")
+    mainCorner.CornerRadius = UDim.new(0, 12 * scale)
+    mainCorner.Parent = Main
     
     local Header = Create({
         type = "Frame",
@@ -1001,14 +1002,9 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         Parent = Main
     })
     
-    Create({type = "UICorner",CornerRadius = UDim.new(0, 12 * scale),Parent = Header})
-    
-    local Title = self:CreateLabel(Header, title, UDim2.new(0, 15 * scale, 0, 0), UDim2.new(1, -100 * scale, 1, 0), options.TextColor or currentTheme.TextColor)
-    Title.TextXAlignment = Enum.TextXAlignment.Left
-    Title.TextSize = 18 * scale
-    if options.titleKey then
-        self:RegisterTranslatable(Title, options.titleKey)
-    end
+    local headerCorner = Instance.new("UICorner")
+    headerCorner.CornerRadius = UDim.new(0, 12 * scale)
+    headerCorner.Parent = Header
     
     local TabsContainer
     local TabButtons = {}
@@ -1018,7 +1014,16 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     
     if tabsEnabled then
         TabsContainer = self:CreateFrame(Main, UDim2.new(1, 0, 0, 40 * scale), UDim2.new(0, 0, 0, 40 * scale), currentTheme.HeaderColor, 0)
-        Create({type = "UICorner",CornerRadius = UDim.new(0, 12 * scale),Parent = TabsContainer})
+        local tabsCorner = Instance.new("UICorner")
+        tabsCorner.CornerRadius = UDim.new(0, 12 * scale)
+        tabsCorner.Parent = TabsContainer
+    end
+    
+    local Title = self:CreateLabel(Header, title, UDim2.new(0, 15 * scale, 0, 0), UDim2.new(1, -100 * scale, 1, 0), options.TextColor or currentTheme.TextColor)
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.TextSize = 18 * scale
+    if options.titleKey then
+        self:RegisterTranslatable(Title, options.titleKey)
     end
     
     local Content = self:CreateFrame(Main, UDim2.new(1, 0, 1, -(80 * scale)), UDim2.new(0, 0, 0, 80 * scale), currentTheme.MainColor, 0)
