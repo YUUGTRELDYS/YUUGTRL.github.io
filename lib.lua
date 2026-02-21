@@ -446,6 +446,36 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         YUUGTRL:UpdateAllTexts()
     end
     
+    -- MODERN TOGGLE
+    function window:CreateToggle(text, default, callback, position, size, colors, translationKey)
+        local togglePos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
+        local toggleSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
+        
+        local toggle = YUUGTRL:CreateToggle(self.Main, text, default, callback, togglePos, toggleSize, colors)
+        
+        if translationKey then
+            YUUGTRL:RegisterTranslatable(toggle.label, translationKey)
+        end
+        
+        table.insert(self.elements, {type = "toggle", obj = toggle})
+        return toggle
+    end
+    
+    -- BUTTON TOGGLE (НОВЫЙ)
+    function window:CreateButtonToggle(text, default, callback, position, size, colors, translationKey)
+        local btnPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
+        local btnSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
+        
+        local toggle = YUUGTRL:CreateButtonToggle(self.Main, text, default, callback, btnPos, btnSize, colors)
+        
+        if translationKey then
+            YUUGTRL:RegisterTranslatable(toggle.button, translationKey)
+        end
+        
+        table.insert(self.elements, {type = "button-toggle", obj = toggle})
+        return toggle
+    end
+    
     return window
 end
 
@@ -570,32 +600,58 @@ function YUUGTRL:CreateSlider(parent, text, min, max, default, callback, positio
     return slider
 end
 
--- Различные типы toggle
-function YUUGTRL:CreateToggle(parent, text, default, callback, position, size, toggleType, colors)
+-- MODERN TOGGLE
+function YUUGTRL:CreateToggle(parent, text, default, callback, position, size, colors)
     if not parent then return end
     
     colors = colors or {}
     local toggleState = default or false
-    local toggleType = toggleType or "modern" -- modern, classic, switch, checkbox, ios, minimal, neon, glass, material, retro
+    local toggleColor = colors.toggleOn or Color3.fromRGB(80, 200, 120)
+    local toggleOffColor = colors.toggleOff or Color3.fromRGB(100, 100, 100)
+    local knobColor = colors.knob or Color3.fromRGB(255, 255, 255)
+    local textColor = colors.text or Color3.fromRGB(255, 255, 255)
     
-    -- Создаем основной фрейм
     local frame = self:CreateFrame(parent, 
-        size or UDim2.new(0, 220, 0, 40), 
+        size or UDim2.new(0, 200, 0, 35), 
         position or UDim2.new(0, 0, 0, 0), 
         Color3.fromRGB(45, 45, 55), 
         8
     )
     
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, -60, 1, 0)
+    label.Size = UDim2.new(1, -50, 1, 0)
     label.Position = UDim2.new(0, 10, 0, 0)
     label.BackgroundTransparency = 1
     label.Text = text or "Toggle"
-    label.TextColor3 = colors.text or Color3.fromRGB(255, 255, 255)
+    label.TextColor3 = textColor
     label.Font = Enum.Font.Gotham
     label.TextSize = 14
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = frame
+    
+    local toggleBg = Instance.new("Frame")
+    toggleBg.Size = UDim2.new(0, 40, 0, 20)
+    toggleBg.Position = UDim2.new(1, -45, 0.5, -10)
+    toggleBg.BackgroundColor3 = toggleState and toggleColor or toggleOffColor
+    toggleBg.BackgroundTransparency = 0
+    toggleBg.BorderSizePixel = 0
+    toggleBg.Parent = frame
+    
+    local toggleCorner = Instance.new("UICorner")
+    toggleCorner.CornerRadius = UDim.new(1, 0)
+    toggleCorner.Parent = toggleBg
+    
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0, 16, 0, 16)
+    knob.Position = toggleState and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+    knob.BackgroundColor3 = knobColor
+    knob.BackgroundTransparency = 0
+    knob.BorderSizePixel = 0
+    knob.Parent = toggleBg
+    
+    local knobCorner = Instance.new("UICorner")
+    knobCorner.CornerRadius = UDim.new(1, 0)
+    knobCorner.Parent = knob
     
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(1, 0, 1, 0)
@@ -603,50 +659,14 @@ function YUUGTRL:CreateToggle(parent, text, default, callback, position, size, t
     button.Text = ""
     button.Parent = frame
     
-    -- Создаем toggle в зависимости от типа
-    local toggleObj
-    
-    if toggleType == "modern" then
-        toggleObj = self:CreateModernToggle(frame, colors, toggleState)
-    elseif toggleType == "classic" then
-        toggleObj = self:CreateClassicToggle(frame, colors, toggleState)
-    elseif toggleType == "switch" then
-        toggleObj = self:CreateSwitchToggle(frame, colors, toggleState)
-    elseif toggleType == "checkbox" then
-        toggleObj = self:CreateCheckboxToggle(frame, colors, toggleState)
-    elseif toggleType == "ios" then
-        toggleObj = self:CreateIOSToggle(frame, colors, toggleState)
-    elseif toggleType == "minimal" then
-        toggleObj = self:CreateMinimalToggle(frame, colors, toggleState)
-    elseif toggleType == "neon" then
-        toggleObj = self:CreateNeonToggle(frame, colors, toggleState)
-    elseif toggleType == "glass" then
-        toggleObj = self:CreateGlassToggle(frame, colors, toggleState)
-    elseif toggleType == "material" then
-        toggleObj = self:CreateMaterialToggle(frame, colors, toggleState)
-    elseif toggleType == "retro" then
-        toggleObj = self:CreateRetroToggle(frame, colors, toggleState)
-    else
-        toggleObj = self:CreateModernToggle(frame, colors, toggleState)
-    end
-    
-    local toggleBg = toggleObj.bg
-    local knob = toggleObj.knob
-    
     local function updateToggle(state)
         toggleState = state
+        toggleBg.BackgroundColor3 = state and toggleColor or toggleOffColor
         
-        if toggleObj.update then
-            toggleObj:update(state)
-        else
-            -- Стандартное обновление для простых toggle
-            toggleBg.BackgroundColor3 = state and (colors.toggleOn or Color3.fromRGB(80, 200, 120)) or (colors.toggleOff or Color3.fromRGB(100, 100, 100))
-            
-            local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            local targetPos = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
-            local tween = TweenService:Create(knob, tweenInfo, {Position = targetPos})
-            tween:Play()
-        end
+        local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local targetPos = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+        local tween = TweenService:Create(knob, tweenInfo, {Position = targetPos})
+        tween:Play()
         
         if callback then
             pcall(callback, state)
@@ -674,9 +694,7 @@ function YUUGTRL:CreateToggle(parent, text, default, callback, position, size, t
         label = label,
         toggleBg = toggleBg,
         knob = knob,
-        button = button,
-        toggleObj = toggleObj,
-        toggleType = toggleType
+        button = button
     }
     
     function toggle:SetState(state)
@@ -692,11 +710,26 @@ function YUUGTRL:CreateToggle(parent, text, default, callback, position, size, t
     end
     
     function toggle:SetColors(newColors)
-        colors = newColors
-        if toggleObj.setColors then
-            toggleObj:setColors(newColors)
+        if newColors.toggleOn then
+            toggleColor = newColors.toggleOn
+            if toggleState then
+                toggleBg.BackgroundColor3 = toggleColor
+            end
         end
-        label.TextColor3 = newColors.text or label.TextColor3
+        if newColors.toggleOff then
+            toggleOffColor = newColors.toggleOff
+            if not toggleState then
+                toggleBg.BackgroundColor3 = toggleOffColor
+            end
+        end
+        if newColors.knob then
+            knobColor = newColors.knob
+            knob.BackgroundColor3 = knobColor
+        end
+        if newColors.text then
+            textColor = newColors.text
+            label.TextColor3 = textColor
+        end
     end
     
     function toggle:SetText(newText)
@@ -710,640 +743,121 @@ function YUUGTRL:CreateToggle(parent, text, default, callback, position, size, t
     return toggle
 end
 
--- Modern Toggle (стандартный)
-function YUUGTRL:CreateModernToggle(parent, colors, initialState)
-    local toggleBg = Instance.new("Frame")
-    toggleBg.Size = UDim2.new(0, 40, 0, 20)
-    toggleBg.Position = UDim2.new(1, -45, 0.5, -10)
-    toggleBg.BackgroundColor3 = initialState and (colors.toggleOn or Color3.fromRGB(80, 200, 120)) or (colors.toggleOff or Color3.fromRGB(100, 100, 100))
-    toggleBg.BackgroundTransparency = 0
-    toggleBg.BorderSizePixel = 0
-    toggleBg.Parent = parent
+-- BUTTON TOGGLE (НОВЫЙ)
+function YUUGTRL:CreateButtonToggle(parent, text, default, callback, position, size, colors)
+    if not parent then return end
     
-    local toggleCorner = Instance.new("UICorner")
-    toggleCorner.CornerRadius = UDim.new(1, 0)
-    toggleCorner.Parent = toggleBg
+    colors = colors or {}
+    local isOn = default or false
     
-    local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 16, 0, 16)
-    knob.Position = initialState and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
-    knob.BackgroundColor3 = colors.knob or Color3.fromRGB(255, 255, 255)
-    knob.BackgroundTransparency = 0
-    knob.BorderSizePixel = 0
-    knob.Parent = toggleBg
+    -- Цвета для разных состояний
+    local colorOn = colors.on or Color3.fromRGB(80, 200, 120)    -- зеленый когда ВКЛ
+    local colorOff = colors.off or Color3.fromRGB(100, 100, 100) -- серый когда ВЫКЛ
+    local textColor = colors.text or Color3.fromRGB(255, 255, 255)
     
-    local knobCorner = Instance.new("UICorner")
-    knobCorner.CornerRadius = UDim.new(1, 0)
-    knobCorner.Parent = knob
+    -- Создаем кнопку
+    local button = Instance.new("TextButton")
+    button.Size = size or UDim2.new(0, 120, 0, 35)
+    button.Position = position or UDim2.new(0, 0, 0, 0)
+    button.BackgroundColor3 = isOn and colorOn or colorOff
+    button.Text = text or "Button"
+    button.TextColor3 = textColor
+    button.Font = Enum.Font.Gotham
+    button.TextSize = 14
+    button.Parent = parent
     
-    return {
-        bg = toggleBg,
-        knob = knob,
-        update = function(self, state)
-            toggleBg.BackgroundColor3 = state and (colors.toggleOn or Color3.fromRGB(80, 200, 120)) or (colors.toggleOff or Color3.fromRGB(100, 100, 100))
-            local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            local targetPos = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
-            local tween = TweenService:Create(knob, tweenInfo, {Position = targetPos})
-            tween:Play()
-        end,
-        setColors = function(self, newColors)
-            colors = newColors
-            toggleBg.BackgroundColor3 = initialState and (colors.toggleOn or Color3.fromRGB(80, 200, 120)) or (colors.toggleOff or Color3.fromRGB(100, 100, 100))
-            knob.BackgroundColor3 = colors.knob or Color3.fromRGB(255, 255, 255)
-        end
-    }
-end
-
--- Classic Toggle (старый стиль)
-function YUUGTRL:CreateClassicToggle(parent, colors, initialState)
-    local toggleBg = Instance.new("Frame")
-    toggleBg.Size = UDim2.new(0, 50, 0, 24)
-    toggleBg.Position = UDim2.new(1, -55, 0.5, -12)
-    toggleBg.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-    toggleBg.BackgroundTransparency = 0
-    toggleBg.BorderSizePixel = 2
-    toggleBg.BorderColor3 = Color3.fromRGB(80, 80, 90)
-    toggleBg.Parent = parent
+    -- Скругляем углы
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = button
     
-    local toggleCorner = Instance.new("UICorner")
-    toggleCorner.CornerRadius = UDim.new(0, 4)
-    toggleCorner.Parent = toggleBg
-    
-    local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 20, 0, 20)
-    knob.Position = initialState and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10)
-    knob.BackgroundColor3 = colors.knob or Color3.fromRGB(200, 200, 200)
-    knob.BackgroundTransparency = 0
-    knob.BorderSizePixel = 1
-    knob.BorderColor3 = Color3.fromRGB(150, 150, 150)
-    knob.Parent = toggleBg
-    
-    local knobCorner = Instance.new("UICorner")
-    knobCorner.CornerRadius = UDim.new(0, 2)
-    knobCorner.Parent = knob
-    
-    local stateIndicator = Instance.new("Frame")
-    stateIndicator.Size = UDim2.new(0, 6, 0, 6)
-    stateIndicator.Position = UDim2.new(0.5, -3, 0.5, -3)
-    stateIndicator.BackgroundColor3 = initialState and (colors.toggleOn or Color3.fromRGB(80, 200, 120)) or Color3.fromRGB(150, 150, 150)
-    stateIndicator.BackgroundTransparency = 0
-    stateIndicator.BorderSizePixel = 0
-    stateIndicator.Parent = knob
-    
-    local indicatorCorner = Instance.new("UICorner")
-    indicatorCorner.CornerRadius = UDim.new(1, 0)
-    indicatorCorner.Parent = stateIndicator
-    
-    return {
-        bg = toggleBg,
-        knob = knob,
-        indicator = stateIndicator,
-        update = function(self, state)
-            stateIndicator.BackgroundColor3 = state and (colors.toggleOn or Color3.fromRGB(80, 200, 120)) or Color3.fromRGB(150, 150, 150)
-            local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            local targetPos = state and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10)
-            local tween = TweenService:Create(knob, tweenInfo, {Position = targetPos})
-            tween:Play()
-        end,
-        setColors = function(self, newColors)
-            colors = newColors
-            stateIndicator.BackgroundColor3 = initialState and (colors.toggleOn or Color3.fromRGB(80, 200, 120)) or Color3.fromRGB(150, 150, 150)
-        end
-    }
-end
-
--- Switch Toggle (как выключатель)
-function YUUGTRL:CreateSwitchToggle(parent, colors, initialState)
-    local toggleBg = Instance.new("Frame")
-    toggleBg.Size = UDim2.new(0, 60, 0, 30)
-    toggleBg.Position = UDim2.new(1, -65, 0.5, -15)
-    toggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-    toggleBg.BackgroundTransparency = 0
-    toggleBg.BorderSizePixel = 0
-    toggleBg.Parent = parent
-    
-    local toggleCorner = Instance.new("UICorner")
-    toggleCorner.CornerRadius = UDim.new(0, 15)
-    toggleCorner.Parent = toggleBg
-    
-    local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 26, 0, 26)
-    knob.Position = initialState and UDim2.new(1, -28, 0.5, -13) or UDim2.new(0, 2, 0.5, -13)
-    knob.BackgroundColor3 = colors.knob or Color3.fromRGB(255, 255, 255)
-    knob.BackgroundTransparency = 0
-    knob.BorderSizePixel = 0
-    knob.Parent = toggleBg
-    
-    local knobCorner = Instance.new("UICorner")
-    knobCorner.CornerRadius = UDim.new(1, 0)
-    knobCorner.Parent = knob
-    
-    local onText = Instance.new("TextLabel")
-    onText.Size = UDim2.new(0, 20, 1, 0)
-    onText.Position = UDim2.new(0, 5, 0, 0)
-    onText.BackgroundTransparency = 1
-    onText.Text = "ON"
-    onText.TextColor3 = initialState and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(100, 100, 100)
-    onText.Font = Enum.Font.GothamBold
-    onText.TextSize = 10
-    onText.TextXAlignment = Enum.TextXAlignment.Left
-    onText.Parent = toggleBg
-    
-    local offText = Instance.new("TextLabel")
-    offText.Size = UDim2.new(0, 25, 1, 0)
-    offText.Position = UDim2.new(1, -25, 0, 0)
-    offText.BackgroundTransparency = 1
-    offText.Text = "OFF"
-    offText.TextColor3 = initialState and Color3.fromRGB(100, 100, 100) or Color3.fromRGB(255, 255, 255)
-    offText.Font = Enum.Font.GothamBold
-    offText.TextSize = 10
-    offText.TextXAlignment = Enum.TextXAlignment.Right
-    offText.Parent = toggleBg
-    
-    return {
-        bg = toggleBg,
-        knob = knob,
-        onText = onText,
-        offText = offText,
-        update = function(self, state)
-            local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            local targetPos = state and UDim2.new(1, -28, 0.5, -13) or UDim2.new(0, 2, 0.5, -13)
-            local tween = TweenService:Create(knob, tweenInfo, {Position = targetPos})
-            tween:Play()
-            
-            onText.TextColor3 = state and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(100, 100, 100)
-            offText.TextColor3 = state and Color3.fromRGB(100, 100, 100) or Color3.fromRGB(255, 255, 255)
-        end,
-        setColors = function(self, newColors)
-            colors = newColors
-            knob.BackgroundColor3 = colors.knob or Color3.fromRGB(255, 255, 255)
-        end
-    }
-end
-
--- Checkbox Toggle
-function YUUGTRL:CreateCheckboxToggle(parent, colors, initialState)
-    local toggleBg = Instance.new("Frame")
-    toggleBg.Size = UDim2.new(0, 24, 0, 24)
-    toggleBg.Position = UDim2.new(1, -29, 0.5, -12)
-    toggleBg.BackgroundColor3 = initialState and (colors.toggleOn or Color3.fromRGB(80, 200, 120)) or Color3.fromRGB(60, 60, 70)
-    toggleBg.BackgroundTransparency = 0
-    toggleBg.BorderSizePixel = 2
-    toggleBg.BorderColor3 = Color3.fromRGB(80, 80, 90)
-    toggleBg.Parent = parent
-    
-    local toggleCorner = Instance.new("UICorner")
-    toggleCorner.CornerRadius = UDim.new(0, 4)
-    toggleCorner.Parent = toggleBg
-    
-    local checkmark = Instance.new("Frame")
-    checkmark.Size = UDim2.new(0, 14, 0, 14)
-    checkmark.Position = UDim2.new(0.5, -7, 0.5, -7)
-    checkmark.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    checkmark.BackgroundTransparency = initialState and 0 or 1
-    checkmark.BorderSizePixel = 0
-    checkmark.Parent = toggleBg
-    
-    local checkCorner = Instance.new("UICorner")
-    checkCorner.CornerRadius = UDim.new(0, 2)
-    checkCorner.Parent = checkmark
-    
-    local checkLine1 = Instance.new("Frame")
-    checkLine1.Size = UDim2.new(0, 8, 0, 2)
-    checkLine1.Position = UDim2.new(0, 2, 0, 7)
-    checkLine1.BackgroundColor3 = colors.checkColor or Color3.fromRGB(80, 200, 120)
-    checkLine1.BackgroundTransparency = initialState and 0 or 1
-    checkLine1.BorderSizePixel = 0
-    checkLine1.Rotation = 45
-    checkLine1.Parent = checkmark
-    
-    local checkLine2 = Instance.new("Frame")
-    checkLine2.Size = UDim2.new(0, 4, 0, 2)
-    checkLine2.Position = UDim2.new(0, 1, 0, 9)
-    checkLine2.BackgroundColor3 = colors.checkColor or Color3.fromRGB(80, 200, 120)
-    checkLine2.BackgroundTransparency = initialState and 0 or 1
-    checkLine2.BorderSizePixel = 0
-    checkLine2.Rotation = 45
-    checkLine2.Parent = checkmark
-    
-    return {
-        bg = toggleBg,
-        checkmark = checkmark,
-        checkLine1 = checkLine1,
-        checkLine2 = checkLine2,
-        update = function(self, state)
-            toggleBg.BackgroundColor3 = state and (colors.toggleOn or Color3.fromRGB(80, 200, 120)) or Color3.fromRGB(60, 60, 70)
-            checkmark.BackgroundTransparency = state and 0 or 1
-            checkLine1.BackgroundTransparency = state and 0 or 1
-            checkLine2.BackgroundTransparency = state and 0 or 1
-        end,
-        setColors = function(self, newColors)
-            colors = newColors
-            toggleBg.BackgroundColor3 = initialState and (colors.toggleOn or Color3.fromRGB(80, 200, 120)) or Color3.fromRGB(60, 60, 70)
-            checkLine1.BackgroundColor3 = colors.checkColor or Color3.fromRGB(80, 200, 120)
-            checkLine2.BackgroundColor3 = colors.checkColor or Color3.fromRGB(80, 200, 120)
-        end
-    }
-end
-
--- iOS Toggle
-function YUUGTRL:CreateIOSToggle(parent, colors, initialState)
-    local toggleBg = Instance.new("Frame")
-    toggleBg.Size = UDim2.new(0, 51, 0, 31)
-    toggleBg.Position = UDim2.new(1, -56, 0.5, -15.5)
-    toggleBg.BackgroundColor3 = initialState and (colors.toggleOn or Color3.fromRGB(52, 199, 89)) or Color3.fromRGB(60, 60, 70)
-    toggleBg.BackgroundTransparency = 0
-    toggleBg.BorderSizePixel = 0
-    toggleBg.Parent = parent
-    
-    local toggleCorner = Instance.new("UICorner")
-    toggleCorner.CornerRadius = UDim.new(1, 0)
-    toggleCorner.Parent = toggleBg
-    
-    local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 27, 0, 27)
-    knob.Position = initialState and UDim2.new(1, -29, 0.5, -13.5) or UDim2.new(0, 2, 0.5, -13.5)
-    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    knob.BackgroundTransparency = 0
-    knob.BorderSizePixel = 0
-    knob.Parent = toggleBg
-    
-    local knobCorner = Instance.new("UICorner")
-    knobCorner.CornerRadius = UDim.new(1, 0)
-    knobCorner.Parent = knob
-    
-    local shadow = Instance.new("UIGradient")
-    shadow.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 50))
-    })
-    shadow.Transparency = NumberSequence.new(0.8)
-    shadow.Rotation = 90
-    shadow.Parent = knob
-    
-    return {
-        bg = toggleBg,
-        knob = knob,
-        update = function(self, state)
-            toggleBg.BackgroundColor3 = state and (colors.toggleOn or Color3.fromRGB(52, 199, 89)) or Color3.fromRGB(60, 60, 70)
-            local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Spring, Enum.EasingDirection.Out)
-            local targetPos = state and UDim2.new(1, -29, 0.5, -13.5) or UDim2.new(0, 2, 0.5, -13.5)
-            local tween = TweenService:Create(knob, tweenInfo, {Position = targetPos})
-            tween:Play()
-        end,
-        setColors = function(self, newColors)
-            colors = newColors
-            toggleBg.BackgroundColor3 = initialState and (colors.toggleOn or Color3.fromRGB(52, 199, 89)) or Color3.fromRGB(60, 60, 70)
-        end
-    }
-end
-
--- Minimal Toggle
-function YUUGTRL:CreateMinimalToggle(parent, colors, initialState)
-    local toggleBg = Instance.new("Frame")
-    toggleBg.Size = UDim2.new(0, 44, 0, 4)
-    toggleBg.Position = UDim2.new(1, -49, 0.5, -2)
-    toggleBg.BackgroundColor3 = initialState and (colors.toggleOn or Color3.fromRGB(80, 200, 120)) or Color3.fromRGB(100, 100, 100)
-    toggleBg.BackgroundTransparency = 0.5
-    toggleBg.BorderSizePixel = 0
-    toggleBg.Parent = parent
-    
-    local toggleCorner = Instance.new("UICorner")
-    toggleCorner.CornerRadius = UDim.new(1, 0)
-    toggleCorner.Parent = toggleBg
-    
-    local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 16, 0, 16)
-    knob.Position = initialState and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
-    knob.BackgroundColor3 = colors.knob or Color3.fromRGB(200, 200, 200)
-    knob.BackgroundTransparency = 0
-    knob.BorderSizePixel = 0
-    knob.Parent = toggleBg
-    
-    local knobCorner = Instance.new("UICorner")
-    knobCorner.CornerRadius = UDim.new(1, 0)
-    knobCorner.Parent = knob
-    
-    return {
-        bg = toggleBg,
-        knob = knob,
-        update = function(self, state)
-            toggleBg.BackgroundColor3 = state and (colors.toggleOn or Color3.fromRGB(80, 200, 120)) or Color3.fromRGB(100, 100, 100)
-            local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            local targetPos = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
-            local tween = TweenService:Create(knob, tweenInfo, {Position = targetPos})
-            tween:Play()
-        end,
-        setColors = function(self, newColors)
-            colors = newColors
-            toggleBg.BackgroundColor3 = initialState and (colors.toggleOn or Color3.fromRGB(80, 200, 120)) or Color3.fromRGB(100, 100, 100)
-            knob.BackgroundColor3 = colors.knob or Color3.fromRGB(200, 200, 200)
-        end
-    }
-end
-
--- Neon Toggle
-function YUUGTRL:CreateNeonToggle(parent, colors, initialState)
-    local toggleBg = Instance.new("Frame")
-    toggleBg.Size = UDim2.new(0, 50, 0, 24)
-    toggleBg.Position = UDim2.new(1, -55, 0.5, -12)
-    toggleBg.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-    toggleBg.BackgroundTransparency = 0
-    toggleBg.BorderSizePixel = 0
-    toggleBg.Parent = parent
-    
-    local toggleCorner = Instance.new("UICorner")
-    toggleCorner.CornerRadius = UDim.new(0, 12)
-    toggleCorner.Parent = toggleBg
-    
-    local glow = Instance.new("UIGradient")
-    glow.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, initialState and (colors.toggleOn or Color3.fromRGB(0, 255, 255)) or Color3.fromRGB(100, 100, 150)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 30))
-    })
-    glow.Transparency = NumberSequence.new(0.8)
-    glow.Rotation = 90
-    glow.Parent = toggleBg
-    
-    local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 20, 0, 20)
-    knob.Position = initialState and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10)
-    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    knob.BackgroundTransparency = 0
-    knob.BorderSizePixel = 0
-    knob.Parent = toggleBg
-    
-    local knobCorner = Instance.new("UICorner")
-    knobCorner.CornerRadius = UDim.new(0, 10)
-    knobCorner.Parent = knob
-    
-    local knobGlow = Instance.new("UIGradient")
-    knobGlow.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, initialState and (colors.toggleOn or Color3.fromRGB(0, 255, 255)) or Color3.fromRGB(150, 150, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
-    })
-    knobGlow.Rotation = 45
-    knobGlow.Parent = knob
-    
-    return {
-        bg = toggleBg,
-        knob = knob,
-        glow = glow,
-        knobGlow = knobGlow,
-        update = function(self, state)
-            glow.Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, state and (colors.toggleOn or Color3.fromRGB(0, 255, 255)) or Color3.fromRGB(100, 100, 150)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 30))
-            })
-            knobGlow.Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, state and (colors.toggleOn or Color3.fromRGB(0, 255, 255)) or Color3.fromRGB(150, 150, 255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
-            })
-            
-            local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            local targetPos = state and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10)
-            local tween = TweenService:Create(knob, tweenInfo, {Position = targetPos})
-            tween:Play()
-        end,
-        setColors = function(self, newColors)
-            colors = newColors
-            self:update(initialState)
-        end
-    }
-end
-
--- Glass Toggle
-function YUUGTRL:CreateGlassToggle(parent, colors, initialState)
-    local toggleBg = Instance.new("Frame")
-    toggleBg.Size = UDim2.new(0, 50, 0, 24)
-    toggleBg.Position = UDim2.new(1, -55, 0.5, -12)
-    toggleBg.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    toggleBg.BackgroundTransparency = 0.9
-    toggleBg.BorderSizePixel = 1
-    toggleBg.BorderColor3 = Color3.fromRGB(255, 255, 255)
-    toggleBg.BorderColor3 = Color3.fromRGB(255, 255, 255)
-    toggleBg.Parent = parent
-    
-    local toggleCorner = Instance.new("UICorner")
-    toggleCorner.CornerRadius = UDim.new(0, 12)
-    toggleCorner.Parent = toggleBg
-    
-    local glassEffect = Instance.new("UIGradient")
-    glassEffect.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 200, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(150, 150, 255))
-    })
-    glassEffect.Transparency = NumberSequence.new(0.8)
-    glassEffect.Rotation = 45
-    glassEffect.Parent = toggleBg
-    
-    local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 20, 0, 20)
-    knob.Position = initialState and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10)
-    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    knob.BackgroundTransparency = 0.3
-    knob.BorderSizePixel = 1
-    knob.BorderColor3 = Color3.fromRGB(255, 255, 255)
-    knob.Parent = toggleBg
-    
-    local knobCorner = Instance.new("UICorner")
-    knobCorner.CornerRadius = UDim.new(0, 10)
-    knobCorner.Parent = knob
-    
-    local knobGlass = Instance.new("UIGradient")
-    knobGlass.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 255))
-    })
-    knobGlass.Transparency = NumberSequence.new(0.5)
-    knobGlass.Rotation = 45
-    knobGlass.Parent = knob
-    
-    return {
-        bg = toggleBg,
-        knob = knob,
-        glassEffect = glassEffect,
-        update = function(self, state)
-            local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            local targetPos = state and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10)
-            local tween = TweenService:Create(knob, tweenInfo, {Position = targetPos})
-            tween:Play()
-        end
-    }
-end
-
--- Material Design Toggle
-function YUUGTRL:CreateMaterialToggle(parent, colors, initialState)
-    local toggleBg = Instance.new("Frame")
-    toggleBg.Size = UDim2.new(0, 58, 0, 32)
-    toggleBg.Position = UDim2.new(1, -63, 0.5, -16)
-    toggleBg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-    toggleBg.BackgroundTransparency = 0
-    toggleBg.BorderSizePixel = 0
-    toggleBg.Parent = parent
-    
-    local toggleCorner = Instance.new("UICorner")
-    toggleCorner.CornerRadius = UDim.new(0, 16)
-    toggleCorner.Parent = toggleBg
-    
-    local rippleEffect = Instance.new("Frame")
-    rippleEffect.Size = UDim2.new(0, 0, 0, 0)
-    rippleEffect.Position = UDim2.new(0.5, 0, 0.5, 0)
-    rippleEffect.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    rippleEffect.BackgroundTransparency = 0.5
-    rippleEffect.BorderSizePixel = 0
-    rippleEffect.Visible = false
-    rippleEffect.Parent = toggleBg
-    
-    local rippleCorner = Instance.new("UICorner")
-    rippleCorner.CornerRadius = UDim.new(1, 0)
-    rippleCorner.Parent = rippleEffect
-    
-    local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 28, 0, 28)
-    knob.Position = initialState and UDim2.new(1, -30, 0.5, -14) or UDim2.new(0, 2, 0.5, -14)
-    knob.BackgroundColor3 = initialState and (colors.toggleOn or Color3.fromRGB(98, 0, 238)) or Color3.fromRGB(150, 150, 150)
-    knob.BackgroundTransparency = 0
-    knob.BorderSizePixel = 0
-    knob.Parent = toggleBg
-    
-    local knobCorner = Instance.new("UICorner")
-    knobCorner.CornerRadius = UDim.new(1, 0)
-    knobCorner.Parent = knob
-    
-    local elevation = Instance.new("UIGradient")
-    elevation.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 100))
-    })
-    elevation.Transparency = NumberSequence.new(0.5)
-    elevation.Rotation = 90
-    elevation.Parent = knob
-    
-    return {
-        bg = toggleBg,
-        knob = knob,
-        ripple = rippleEffect,
-        update = function(self, state)
-            knob.BackgroundColor3 = state and (colors.toggleOn or Color3.fromRGB(98, 0, 238)) or Color3.fromRGB(150, 150, 150)
-            
-            local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            local targetPos = state and UDim2.new(1, -30, 0.5, -14) or UDim2.new(0, 2, 0.5, -14)
-            local tween = TweenService:Create(knob, tweenInfo, {Position = targetPos})
-            tween:Play()
-            
-            -- Ripple effect
-            rippleEffect.Visible = true
-            rippleEffect.Size = UDim2.new(0, 40, 0, 40)
-            TweenService:Create(rippleEffect, TweenInfo.new(0.3), {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1}):Play()
-            task.wait(0.3)
-            rippleEffect.Visible = false
-        end,
-        setColors = function(self, newColors)
-            colors = newColors
-            knob.BackgroundColor3 = initialState and (colors.toggleOn or Color3.fromRGB(98, 0, 238)) or Color3.fromRGB(150, 150, 150)
-        end
-    }
-end
-
--- Retro Toggle
-function YUUGTRL:CreateRetroToggle(parent, colors, initialState)
-    local toggleBg = Instance.new("Frame")
-    toggleBg.Size = UDim2.new(0, 48, 0, 22)
-    toggleBg.Position = UDim2.new(1, -53, 0.5, -11)
-    toggleBg.BackgroundColor3 = Color3.fromRGB(80, 60, 40)
-    toggleBg.BackgroundTransparency = 0
-    toggleBg.BorderSizePixel = 2
-    toggleBg.BorderColor3 = Color3.fromRGB(120, 80, 50)
-    toggleBg.Parent = parent
-    
-    local toggleCorner = Instance.new("UICorner")
-    toggleCorner.CornerRadius = UDim.new(0, 4)
-    toggleCorner.Parent = toggleBg
-    
-    local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 18, 0, 18)
-    knob.Position = initialState and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
-    knob.BackgroundColor3 = Color3.fromRGB(200, 180, 150)
-    knob.BackgroundTransparency = 0
-    knob.BorderSizePixel = 1
-    knob.BorderColor3 = Color3.fromRGB(100, 70, 40)
-    knob.Parent = toggleBg
-    
-    local knobCorner = Instance.new("UICorner")
-    knobCorner.CornerRadius = UDim.new(0, 2)
-    knobCorner.Parent = knob
-    
-    local rivet1 = Instance.new("Frame")
-    rivet1.Size = UDim2.new(0, 4, 0, 4)
-    rivet1.Position = UDim2.new(0, 3, 0.5, -2)
-    rivet1.BackgroundColor3 = Color3.fromRGB(150, 120, 90)
-    rivet1.BorderSizePixel = 0
-    rivet1.Parent = knob
-    
-    local rivet1Corner = Instance.new("UICorner")
-    rivet1Corner.CornerRadius = UDim.new(1, 0)
-    rivet1Corner.Parent = rivet1
-    
-    local rivet2 = Instance.new("Frame")
-    rivet2.Size = UDim2.new(0, 4, 0, 4)
-    rivet2.Position = UDim2.new(1, -7, 0.5, -2)
-    rivet2.BackgroundColor3 = Color3.fromRGB(150, 120, 90)
-    rivet2.BorderSizePixel = 0
-    rivet2.Parent = knob
-    
-    local rivet2Corner = Instance.new("UICorner")
-    rivet2Corner.CornerRadius = UDim.new(1, 0)
-    rivet2Corner.Parent = rivet2
-    
-    local led = Instance.new("Frame")
-    led.Size = UDim2.new(0, 6, 0, 6)
-    led.Position = UDim2.new(0.5, -3, 0, 2)
-    led.BackgroundColor3 = initialState and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(100, 100, 100)
-    led.BorderSizePixel = 0
-    led.Parent = knob
-    
-    local ledCorner = Instance.new("UICorner")
-    ledCorner.CornerRadius = UDim.new(1, 0)
-    ledCorner.Parent = led
-    
-    return {
-        bg = toggleBg,
-        knob = knob,
-        led = led,
-        rivet1 = rivet1,
-        rivet2 = rivet2,
-        update = function(self, state)
-            led.BackgroundColor3 = state and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(100, 100, 100)
-            
-            local tweenInfo = TweenInfo.new(0.15, Enum.EasingStyle.Linear)
-            local targetPos = state and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
-            local tween = TweenService:Create(knob, tweenInfo, {Position = targetPos})
-            tween:Play()
-        end
-    }
-end
-
-local originalCreateWindow = YUUGTRL.CreateWindow
-YUUGTRL.CreateWindow = function(title, size, position, options)
-    local window = originalCreateWindow(title, size, position, options)
-    
-    function window:CreateToggle(text, default, callback, position, size, toggleType, colors, translationKey)
-        local togglePos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
-        local toggleSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
-        
-        local toggle = YUUGTRL:CreateToggle(self.Main, text, default, callback, togglePos, toggleSize, toggleType, colors)
-        
-        if translationKey then
-            YUUGTRL:RegisterTranslatable(toggle.label, translationKey)
-        end
-        
-        table.insert(self.elements, {type = "toggle", obj = toggle})
-        return toggle
+    -- Функция обновления внешнего вида
+    local function updateVisuals()
+        button.BackgroundColor3 = isOn and colorOn or colorOff
     end
     
-    return window
+    -- Эффект при наведении
+    local function onHover()
+        local baseColor = isOn and colorOn or colorOff
+        button.BackgroundColor3 = Color3.fromRGB(
+            math.min(baseColor.R * 255 + 30, 255),
+            math.min(baseColor.G * 255 + 30, 255),
+            math.min(baseColor.B * 255 + 30, 255)
+        )
+    end
+    
+    local function onLeave()
+        updateVisuals()
+    end
+    
+    button.MouseEnter:Connect(onHover)
+    button.MouseLeave:Connect(onLeave)
+    
+    -- Обработчик нажатия
+    button.MouseButton1Click:Connect(function()
+        isOn = not isOn
+        updateVisuals()
+        
+        -- Анимация нажатия
+        button:TweenSize(
+            UDim2.new(0, button.Size.X.Offset - 4, 0, button.Size.Y.Offset - 4),
+            "Out",
+            "Quad",
+            0.05,
+            true
+        )
+        task.wait(0.05)
+        button:TweenSize(
+            size or UDim2.new(0, 120, 0, 35),
+            "Out",
+            "Quad",
+            0.05,
+            true
+        )
+        
+        if callback then
+            pcall(callback, isOn)
+        end
+    end)
+    
+    -- Объект для управления
+    local toggleObject = {}
+    
+    function toggleObject:SetState(state)
+        isOn = state
+        updateVisuals()
+        if callback then callback(isOn) end
+    end
+    
+    function toggleObject:GetState()
+        return isOn
+    end
+    
+    function toggleObject:Toggle()
+        isOn = not isOn
+        updateVisuals()
+        if callback then callback(isOn) end
+    end
+    
+    function toggleObject:SetText(newText)
+        button.Text = newText
+    end
+    
+    function toggleObject:SetColors(newColors)
+        if newColors.on then colorOn = newColors.on end
+        if newColors.off then colorOff = newColors.off end
+        if newColors.text then textColor = newColors.text end
+        updateVisuals()
+    end
+    
+    function toggleObject:Destroy()
+        button:Destroy()
+    end
+    
+    -- Сохраняем ссылку на кнопку для переводов
+    toggleObject.button = button
+    
+    return toggleObject
 end
 
 return YUUGTRL
