@@ -420,31 +420,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         return btn
     end
     
-    function window:CreateToggle(text, default, callback, color, position, size, translationKey)
-        local frame = self:CreateFrame(self.Main, size or UDim2.new(0, 200, 0, 35), position, Color3.fromRGB(45, 45, 55), 8)
-        
-        local label = self:CreateLabel(frame, text, UDim2.new(0, 10, 0, 0), UDim2.new(1, -50, 1, 0))
-        if translationKey then
-            YUUGTRL:RegisterTranslatable(label, translationKey)
-        end
-        
-        local toggleColor = default and Color3.fromRGB(80, 220, 100) or Color3.fromRGB(220, 80, 80)
-        local toggleBtn = self:CreateButton(frame, "", nil, toggleColor, UDim2.new(1, -40, 0, 2.5), UDim2.new(0, 30, 0, 30), "darken")
-        Create({type = "UICorner",CornerRadius = UDim.new(0, 15),Parent = toggleBtn})
-        
-        local toggled = default or false
-        
-        toggleBtn.MouseButton1Click:Connect(function()
-            toggled = not toggled
-            local newColor = toggled and Color3.fromRGB(80, 220, 100) or Color3.fromRGB(220, 80, 80)
-            toggleBtn.BackgroundColor3 = newColor
-            self:ApplyButtonStyle(toggleBtn, newColor)
-            if callback then callback(toggled) end
-        end)
-        
-        return toggleBtn
-    end
-    
     function window:CreateSlider(text, min, max, default, callback, position, size)
         local sliderPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
         local sliderSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
