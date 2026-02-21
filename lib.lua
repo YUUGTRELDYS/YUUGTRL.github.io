@@ -8,7 +8,7 @@ local viewportSize = workspace.CurrentCamera.ViewportSize
 
 local scale = 1
 if isMobile then
-    scale = 0.65 -- Просто уменьшаем всё одинаково
+    scale = math.min(viewportSize.X / 500, 1)
 end
 
 local splash = Instance.new("ScreenGui")
@@ -246,7 +246,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     local screenSize = workspace.CurrentCamera.ViewportSize
     local scale = 1
     if isMobile then
-        scale = 0.65
+        scale = math.min(screenSize.X / 500, 1)
     end
     
     local windowSize = size
