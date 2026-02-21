@@ -350,8 +350,39 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         SettingsBtn = SettingsBtn,
         CloseBtn = CloseBtn,
         elements = {},
-        scale = scale
+        scale = scale,
+        options = options
     }
+    
+    function window:SetMainColor(color)
+        self.Main.BackgroundColor3 = color
+    end
+    
+    function window:SetHeaderColor(color)
+        self.Header.BackgroundColor3 = color
+    end
+    
+    function window:SetTextColor(color)
+        self.Title.TextColor3 = color
+        for _, element in pairs(self.elements) do
+            if element.type == "label" and element.obj then
+                element.obj.TextColor3 = color
+            end
+        end
+    end
+    
+    function window:SetCornerRadius(radius)
+        for _, v in pairs(self.Main:GetChildren()) do
+            if v:IsA("UICorner") then
+                v.CornerRadius = UDim.new(0, radius * self.scale)
+            end
+        end
+        for _, v in pairs(self.Header:GetChildren()) do
+            if v:IsA("UICorner") then
+                v.CornerRadius = UDim.new(0, radius * self.scale)
+            end
+        end
+    end
     
     function window:CreateFrame(size, position, color, radius)
         local frameSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
@@ -373,6 +404,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         if translationKey then
             YUUGTRL:RegisterTranslatable(label, translationKey)
         end
+        table.insert(self.elements, {type = "label", obj = label})
         return label
     end
     
@@ -384,6 +416,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         if translationKey then
             YUUGTRL:RegisterTranslatable(btn, translationKey)
         end
+        table.insert(self.elements, {type = "button", obj = btn})
         return btn
     end
     
