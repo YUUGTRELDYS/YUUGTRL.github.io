@@ -9,11 +9,11 @@ local viewportSize = workspace.CurrentCamera.ViewportSize
 local scale = 1
 if isMobile then
     if viewportSize.X < 600 then
-        scale = 0.65
+        scale = 0.6
     elseif viewportSize.X < 800 then
-        scale = 0.75
+        scale = 0.7
     else
-        scale = 0.85
+        scale = 0.8
     end
 end
 
@@ -24,18 +24,18 @@ splash.DisplayOrder = 9999
 splash.ResetOnSpawn = false
 splash.Parent = player:WaitForChild("PlayerGui")
 
-local splashWidth = 220 * scale
-local splashHeight = 60 * scale
+local splashWidth = 200 * scale
+local splashHeight = 50 * scale
 local splashFrame = Instance.new("Frame")
 splashFrame.Size = UDim2.new(0, splashWidth, 0, splashHeight)
-splashFrame.Position = UDim2.new(1, -splashWidth - 20, 0, 20)
+splashFrame.Position = UDim2.new(1, -splashWidth - 15, 0, 15)
 splashFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 splashFrame.BackgroundTransparency = 0.2
 splashFrame.BorderSizePixel = 0
 splashFrame.Parent = splash
 
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 12 * scale)
+corner.CornerRadius = UDim.new(0, 10 * scale)
 corner.Parent = splashFrame
 
 local gradient = Instance.new("UIGradient")
@@ -48,12 +48,12 @@ gradient.Parent = splashFrame
 
 local logo = Instance.new("TextLabel")
 logo.Size = UDim2.new(0.6, -5 * scale, 1, 0)
-logo.Position = UDim2.new(0, 10 * scale, 0, 0)
+logo.Position = UDim2.new(0, 8 * scale, 0, 0)
 logo.BackgroundTransparency = 1
 logo.Text = "YUUGTRL"
 logo.TextColor3 = Color3.fromRGB(255, 255, 255)
 logo.Font = Enum.Font.GothamBold
-logo.TextSize = 24 * scale
+logo.TextSize = 22 * scale
 logo.TextXAlignment = Enum.TextXAlignment.Left
 logo.Parent = splashFrame
 
@@ -64,11 +64,11 @@ loaded.BackgroundTransparency = 1
 loaded.Text = "loaded"
 loaded.TextColor3 = Color3.fromRGB(255, 255, 255)
 loaded.Font = Enum.Font.Gotham
-loaded.TextSize = 16 * scale
+loaded.TextSize = 14 * scale
 loaded.TextXAlignment = Enum.TextXAlignment.Left
 loaded.Parent = splashFrame
 
-splashFrame:TweenPosition(UDim2.new(1, -splashWidth - 20, 0, 20), "Out", "Quad", 0.3, true)
+splashFrame:TweenPosition(UDim2.new(1, -splashWidth - 15, 0, 15), "Out", "Quad", 0.3, true)
 
 task.wait(0.2)
 
@@ -78,7 +78,7 @@ textColorTween:Play()
 task.wait(1.2)
 
 local fadeTween = TweenService:Create(splashFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {
-    Position = UDim2.new(1, -splashWidth - 20, 1, splashHeight + 20),
+    Position = UDim2.new(1, -splashWidth - 15, 1, splashHeight + 15),
     BackgroundTransparency = 1
 })
 fadeTween:Play()
@@ -144,6 +144,13 @@ function YUUGTRL:UpdateAllTexts()
             table.remove(translatableElements, i)
         end
     end
+end
+
+local function SmoothColorChange(element, targetColor, duration)
+    if not element then return end
+    local tween = TweenService:Create(element, TweenInfo.new(duration or 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = targetColor})
+    tween:Play()
+    return tween
 end
 
 local function Create(props)
@@ -253,11 +260,11 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     local scale = 1
     if isMobile then
         if screenSize.X < 600 then
-            scale = 0.65
+            scale = 0.6
         elseif screenSize.X < 800 then
-            scale = 0.75
+            scale = 0.7
         else
-            scale = 0.85
+            scale = 0.8
         end
     end
     
@@ -265,12 +272,12 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     if size then
         windowSize = UDim2.new(size.X.Scale, size.X.Offset * scale, size.Y.Scale, size.Y.Offset * scale)
     else
-        windowSize = UDim2.new(0, 350 * scale, 0, 450 * scale)
+        windowSize = UDim2.new(0, 320 * scale, 0, 400 * scale)
     end
     
     local windowPos = position
     if not windowPos then
-        windowPos = UDim2.new(0.5, -(175 * scale), 0.5, -(225 * scale))
+        windowPos = UDim2.new(0.5, -(160 * scale), 0.5, -(200 * scale))
     elseif position then
         windowPos = UDim2.new(position.X.Scale, position.X.Offset * scale, position.Y.Scale, position.Y.Offset * scale)
     end
@@ -293,21 +300,21 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         Parent = ScreenGui
     })
     
-    Create({type = "UICorner",CornerRadius = UDim.new(0, 12 * scale),Parent = Main})
+    Create({type = "UICorner",CornerRadius = UDim.new(0, 10 * scale),Parent = Main})
     
     local Header = Create({
         type = "Frame",
-        Size = UDim2.new(1, 0, 0, 40 * scale),
+        Size = UDim2.new(1, 0, 0, 35 * scale),
         BackgroundColor3 = options.HeaderColor or Color3.fromRGB(40, 40, 50),
         BorderSizePixel = 0,
         Parent = Main
     })
     
-    Create({type = "UICorner",CornerRadius = UDim.new(0, 12 * scale),Parent = Header})
+    Create({type = "UICorner",CornerRadius = UDim.new(0, 10 * scale),Parent = Header})
     
-    local Title = self:CreateLabel(Header, title, UDim2.new(0, 15 * scale, 0, 0), UDim2.new(1, -100 * scale, 1, 0), options.TextColor or Color3.fromRGB(255, 255, 255))
+    local Title = self:CreateLabel(Header, title, UDim2.new(0, 12 * scale, 0, 0), UDim2.new(1, -90 * scale, 1, 0), options.TextColor or Color3.fromRGB(255, 255, 255))
     Title.TextXAlignment = Enum.TextXAlignment.Left
-    Title.TextSize = 18 * scale
+    Title.TextSize = 16 * scale
     if options.titleKey then
         self:RegisterTranslatable(Title, options.titleKey)
     end
@@ -316,11 +323,11 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     local CloseBtn
     
     if options.ShowSettings ~= false then
-        SettingsBtn = self:CreateButton(Header, "⚙", nil, options.AccentColor or Color3.fromRGB(80, 100, 220), UDim2.new(1, -70 * scale, 0, 5 * scale), UDim2.new(0, 30 * scale, 0, 30 * scale), "darken")
+        SettingsBtn = self:CreateButton(Header, "⚙", nil, options.AccentColor or Color3.fromRGB(80, 100, 220), UDim2.new(1, -65 * scale, 0, 5 * scale), UDim2.new(0, 25 * scale, 0, 25 * scale), "darken")
     end
     
     if options.ShowClose ~= false then
-        CloseBtn = self:CreateButton(Header, "X", nil, options.CloseColor or Color3.fromRGB(255, 100, 100), UDim2.new(1, -35 * scale, 0, 5 * scale), UDim2.new(0, 30 * scale, 0, 30 * scale), "darken")
+        CloseBtn = self:CreateButton(Header, "X", nil, options.CloseColor or Color3.fromRGB(255, 100, 100), UDim2.new(1, -30 * scale, 0, 5 * scale), UDim2.new(0, 25 * scale, 0, 25 * scale), "darken")
         CloseBtn.MouseButton1Click:Connect(function() 
             ScreenGui:Destroy() 
         end)
@@ -385,6 +392,11 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         if translationKey then
             YUUGTRL:RegisterTranslatable(label, translationKey)
         end
+        
+        function label:SetColorSmooth(newColor, duration)
+            SmoothColorChange(label, newColor, duration)
+        end
+        
         return label
     end
     
@@ -396,6 +408,11 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         if translationKey then
             YUUGTRL:RegisterTranslatable(btn, translationKey)
         end
+        
+        function btn:SetTextColorSmooth(newColor, duration)
+            SmoothColorChange(btn, newColor, duration)
+        end
+        
         return btn
     end
     
@@ -445,7 +462,7 @@ function YUUGTRL:CreateFrame(parent, size, position, color, radius)
         Parent = parent
     })
     
-    Create({type = "UICorner",CornerRadius = UDim.new(0, radius or 12),Parent = frame})
+    Create({type = "UICorner",CornerRadius = UDim.new(0, radius or 10),Parent = frame})
     
     return frame
 end
