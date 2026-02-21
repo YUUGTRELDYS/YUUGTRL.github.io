@@ -153,6 +153,80 @@ local function SmoothColorChange(element, targetColor, duration)
     return tween
 end
 
+local function ApplyGradientToText(label, topColor, bottomColor)
+    if not label then return end
+    
+    for _, v in pairs(label:GetChildren()) do
+        if v:IsA("UIGradient") then
+            v:Destroy()
+        end
+    end
+    
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, topColor),
+        ColorSequenceKeypoint.new(1, bottomColor)
+    })
+    gradient.Rotation = 90
+    gradient.Parent = label
+end
+
+local function CreateMultiColorText(parent, text, parts, position, size)
+    local frame = Instance.new("Frame")
+    frame.Size = size or UDim2.new(0, 200, 0, 30)
+    frame.Position = position or UDim2.new(0, 0, 0, 0)
+    frame.BackgroundTransparency = 1
+    frame.Parent = parent
+    
+    local totalLength = 0
+    for _, part in ipairs(parts) do
+        totalLength = totalLength + #part.text
+    end
+    
+    local currentX = 0
+    local labels = {}
+    
+    for i, part in ipairs(parts) do
+        local width = (#part.text / totalLength) * frame.AbsoluteSize.X
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(0, width, 1, 0)
+        label.Position = UDim2.new(0, currentX, 0, 0)
+        label.BackgroundTransparency = 1
+        label.Text = part.text
+        label.TextColor3 = part.color or Color3.fromRGB(255, 255, 255)
+        label.Font = part.font or Enum.Font.GothamBold
+        label.TextSize = part.textSize or 14
+        label.Parent = frame
+        
+        if part.effect == "rainbow" then
+            spawn(function()
+                local hue = 0
+                while label and label.Parent do
+                    hue = (hue + 0.02) % 1
+                    label.TextColor3 = Color3.fromHSV(hue, 1, 1)
+                    task.wait(0.03)
+                end
+            end)
+        elseif part.effect == "pulse" then
+            spawn(function()
+                local toggle = false
+                while label and label.Parent do
+                    toggle = not toggle
+                    label.TextColor3 = toggle and part.color or (part.pulseColor or Color3.fromRGB(255, 255, 255))
+                    task.wait(part.pulseSpeed or 0.3)
+                end
+            end)
+        elseif part.effect == "gradient" then
+            ApplyGradientToText(label, part.topColor or part.color, part.bottomColor or Color3.fromRGB(0, 0, 0))
+        end
+        
+        currentX = currentX + width
+        table.insert(labels, label)
+    end
+    
+    return frame, labels
+end
+
 local function Create(props)
     local obj = Instance.new(props.type)
     for i, v in pairs(props) do
@@ -393,11 +467,73 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             YUUGTRL:RegisterTranslatable(label, translationKey)
         end
         
+        function label:SetGradient(topColor, bottomColor)
+            ApplyGradientToText(label, topColor, bottomColor)
+        end
+        
+        function label:RemoveGradient()
+            for _, v in pairs(label:GetChildren()) do
+                if v:IsA("UIGradient") then
+                    v:Destroy()
+                end
+            end
+        end
+        
         function label:SetColorSmooth(newColor, duration)
             SmoothColorChange(label, newColor, duration)
         end
         
+        function label:Rainbow(duration)
+            local hue = 0
+            spawn(function()
+                while label and label.Parent do
+                    hue = (hue + 0.01) % 1
+                    label.TextColor3 = Color3.fromHSV(hue, 1, 1)
+                    task.wait(duration or 0.05)
+                end
+            end)
+        end
+        
+        function label:Pulse(color1, color2, speed)
+            local toggled = false
+            spawn(function()
+                while label and label.Parent do
+                    toggled = not toggled
+                    SmoothColorChange(label, toggled and color1 or color2, speed or 0.5)
+                    task.wait(speed or 0.5)
+                end
+            end)
+        end
+        
+        function label:Shake(intensity)
+            local originalPos = label.Position
+            spawn(function()
+                for i = 1, 5 do
+                    local offset = UDim2.new(0, math.random(-intensity or 3, intensity or 3), 0, math.random(-intensity or 3, intensity or 3))
+                    label.Position = originalPos + offset
+                    task.wait(0.05)
+                end
+                label.Position = originalPos
+            end)
+        end
+        
+        function label:Wave()
+            local originalSize = label.TextSize
+            spawn(function()
+                for i = 1, 3 do
+                    label.TextSize = originalSize * 1.2
+                    task.wait(0.1)
+                    label.TextSize = originalSize
+                    task.wait(0.1)
+                end
+            end)
+        end
+        
         return label
+    end
+    
+    function window:CreateMultiColorText(text, parts, position, size)
+        return CreateMultiColorText(self.Main, text, parts, position, size)
     end
     
     function window:CreateButton(text, callback, color, position, size, style, translationKey)
@@ -411,6 +547,10 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         
         function btn:SetTextColorSmooth(newColor, duration)
             SmoothColorChange(btn, newColor, duration)
+        end
+        
+        function btn:SetTextGradient(topColor, bottomColor)
+            ApplyGradientToText(btn, topColor, bottomColor)
         end
         
         return btn
