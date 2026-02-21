@@ -228,6 +228,45 @@ function YUUGTRL:CreateButton(parent, text, callback, color, position, size)
     return btn
 end
 
+function YUUGTRL:DarkenButton(button)
+    if not button then return end
+    local gradient = button:FindFirstChildOfClass("UIGradient")
+    if gradient then
+        local currentColor = gradient.Color.Keypoints[1].Value
+        local darker = Color3.fromRGB(
+            math.max(currentColor.R * 255 - 70, 0),
+            math.max(currentColor.G * 255 - 70, 0),
+            math.max(currentColor.B * 255 - 70, 0)
+        )
+        gradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, darker),
+            ColorSequenceKeypoint.new(1, darker)
+        })
+    end
+end
+
+function YUUGTRL:RestoreButtonStyle(button, color)
+    if not button then return end
+    local gradient = button:FindFirstChildOfClass("UIGradient")
+    if gradient then
+        local darker = Color3.fromRGB(
+            math.max(color.R * 255 - 50, 0),
+            math.max(color.G * 255 - 50, 0),
+            math.max(color.B * 255 - 50, 0)
+        )
+        gradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, color),
+            ColorSequenceKeypoint.new(1, darker)
+        })
+        local brighter = Color3.fromRGB(
+            math.min(color.R * 255 + 120, 255),
+            math.min(color.G * 255 + 120, 255),
+            math.min(color.B * 255 + 120, 255)
+        )
+        button.TextColor3 = brighter
+    end
+end
+
 function YUUGTRL:CreateWindow(title, size, position, options)
     options = options or {}
     
@@ -435,8 +474,8 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     end
     
     function window:CreateButtonToggle(text, default, callback, position, size, colors, translationKey)
-        local btnPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
-        local btnSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
+        local btnPos = position
+        local btnSize = size
         
         local toggle = YUUGTRL:CreateButtonToggle(self.Main, text, default, callback, btnPos, btnSize, colors)
         
@@ -634,6 +673,21 @@ function YUUGTRL:CreateButtonToggle(parent, text, default, callback, position, s
     button.MouseButton1Click:Connect(function()
         isOn = not isOn
         updateGradient()
+        local currentColor = isOn and colorOn or colorOff
+        local darker = Color3.fromRGB(
+            math.max(currentColor.R * 255 - 70, 0),
+            math.max(currentColor.G * 255 - 70, 0),
+            math.max(currentColor.B * 255 - 70, 0)
+        )
+        local gradient = button:FindFirstChild("UIGradient")
+        if gradient then
+            gradient.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, darker),
+                ColorSequenceKeypoint.new(1, darker)
+            })
+        end
+        task.wait(0.1)
+        updateGradient()
         if callback then
             pcall(callback, isOn)
         end
@@ -659,6 +713,12 @@ function YUUGTRL:CreateButtonToggle(parent, text, default, callback, position, s
     
     function toggleObject:SetText(newText)
         button.Text = newText
+    end
+    
+    function toggleObject:SetColors(newColors)
+        if newColors.on then colorOn = newColors.on end
+        if newColors.off then colorOff = newColors.off end
+        updateGradient()
     end
     
     function toggleObject:Destroy()
