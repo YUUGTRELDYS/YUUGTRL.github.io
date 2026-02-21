@@ -8,7 +8,7 @@ local viewportSize = workspace.CurrentCamera.ViewportSize
 
 local scale = 1
 if isMobile then
-    scale = 1 -- Не уменьшаем, а адаптируем контейнеры
+    scale = 1
 end
 
 local splash = Instance.new("ScreenGui")
@@ -247,10 +247,9 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     local windowSize = size or UDim2.new(0, 350, 0, 450)
     local windowPos = position or UDim2.new(0.5, -175, 0.5, -225)
     
-    -- Для мобильных устройств делаем окно на весь экран
     if isMobile then
-        windowSize = UDim2.new(1, -20, 1, -20) -- Почти весь экран с отступами
-        windowPos = UDim2.new(0, 10, 0, 10)
+        windowSize = UDim2.new(0, 350, 0, 450)
+        windowPos = UDim2.new(0.5, -175, 0.5, -225)
     end
     
     local ScreenGui = Create({
