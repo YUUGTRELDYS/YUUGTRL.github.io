@@ -290,8 +290,8 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     
     local dragging, dragInput, dragStart, startPos
     local resizing = false
-    var resizeStart = nil
-    var resizeStartSize = nil
+    local resizeStart = nil
+    local resizeStartSize = nil
     
     Header.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
