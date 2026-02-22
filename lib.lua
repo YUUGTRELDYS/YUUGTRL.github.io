@@ -96,64 +96,19 @@ end)
 local languages = {}
 local currentLanguage = "English"
 local translatableElements = {}
-local themes = {
-    dark = {
-        MainColor = Color3.fromRGB(30, 30, 40),
-        HeaderColor = Color3.fromRGB(40, 40, 50),
-        TextColor = Color3.fromRGB(255, 255, 255),
-        AccentColor = Color3.fromRGB(80, 100, 220),
-        ButtonColor = Color3.fromRGB(60, 100, 200),
-        FrameColor = Color3.fromRGB(35, 35, 45),
-        InputColor = Color3.fromRGB(40, 40, 50),
-        ScrollBarColor = Color3.fromRGB(100, 100, 150),
-        DangerColor = Color3.fromRGB(255, 100, 100),
-        SuccessColor = Color3.fromRGB(100, 255, 100),
-        WarningColor = Color3.fromRGB(255, 200, 100)
-    },
-    light = {
-        MainColor = Color3.fromRGB(240, 240, 245),
-        HeaderColor = Color3.fromRGB(230, 230, 235),
-        TextColor = Color3.fromRGB(0, 0, 0),
-        AccentColor = Color3.fromRGB(0, 120, 215),
-        ButtonColor = Color3.fromRGB(0, 120, 215),
-        FrameColor = Color3.fromRGB(220, 220, 225),
-        InputColor = Color3.fromRGB(255, 255, 255),
-        ScrollBarColor = Color3.fromRGB(150, 150, 150),
-        DangerColor = Color3.fromRGB(255, 80, 80),
-        SuccessColor = Color3.fromRGB(80, 200, 80),
-        WarningColor = Color3.fromRGB(255, 180, 80)
-    },
-    purple = {
-        MainColor = Color3.fromRGB(35, 25, 45),
-        HeaderColor = Color3.fromRGB(45, 35, 55),
-        TextColor = Color3.fromRGB(255, 255, 255),
-        AccentColor = Color3.fromRGB(170, 85, 255),
-        ButtonColor = Color3.fromRGB(140, 70, 250),
-        FrameColor = Color3.fromRGB(40, 30, 50),
-        InputColor = Color3.fromRGB(50, 40, 60),
-        ScrollBarColor = Color3.fromRGB(150, 100, 200),
-        DangerColor = Color3.fromRGB(255, 100, 100),
-        SuccessColor = Color3.fromRGB(100, 255, 100),
-        WarningColor = Color3.fromRGB(255, 200, 100)
-    }
+local theme = {
+    MainColor = Color3.fromRGB(30, 30, 40),
+    HeaderColor = Color3.fromRGB(40, 40, 50),
+    TextColor = Color3.fromRGB(255, 255, 255),
+    AccentColor = Color3.fromRGB(80, 100, 220),
+    ButtonColor = Color3.fromRGB(60, 100, 200),
+    FrameColor = Color3.fromRGB(35, 35, 45),
+    InputColor = Color3.fromRGB(40, 40, 50),
+    ScrollBarColor = Color3.fromRGB(100, 100, 150),
+    DangerColor = Color3.fromRGB(255, 100, 100),
+    SuccessColor = Color3.fromRGB(100, 255, 100),
+    WarningColor = Color3.fromRGB(255, 200, 100)
 }
-local currentTheme = themes.dark
-
-function YUUGTRL:SetTheme(themeName)
-    if themes[themeName] then
-        currentTheme = themes[themeName]
-        return true
-    end
-    return false
-end
-
-function YUUGTRL:GetTheme()
-    return currentTheme
-end
-
-function YUUGTRL:AddTheme(name, themeTable)
-    themes[name] = themeTable
-end
 
 function YUUGTRL:AddLanguage(name, translations)
     languages[name] = translations
@@ -231,10 +186,10 @@ function YUUGTRL:ShowNotification(title, message, duration, notifType)
     notifType = notifType or "info"
     
     local types = {
-        success = {color = currentTheme.SuccessColor, icon = "✓"},
-        error = {color = currentTheme.DangerColor, icon = "✗"},
-        warning = {color = currentTheme.WarningColor, icon = "!"},
-        info = {color = currentTheme.AccentColor, icon = "ℹ"}
+        success = {color = theme.SuccessColor, icon = "✓"},
+        error = {color = theme.DangerColor, icon = "✗"},
+        warning = {color = theme.WarningColor, icon = "!"},
+        info = {color = theme.AccentColor, icon = "ℹ"}
     }
     
     local notifTypeData = types[notifType] or types.info
@@ -252,7 +207,7 @@ function YUUGTRL:ShowNotification(title, message, duration, notifType)
     local notifFrame = Instance.new("Frame")
     notifFrame.Size = UDim2.new(0, notifWidth, 0, notifHeight)
     notifFrame.Position = UDim2.new(1, -notifWidth - 15, 0, 15)
-    notifFrame.BackgroundColor3 = currentTheme.MainColor
+    notifFrame.BackgroundColor3 = theme.MainColor
     notifFrame.BackgroundTransparency = 0.1
     notifFrame.BorderSizePixel = 0
     notifFrame.Parent = notifGui
@@ -283,7 +238,7 @@ function YUUGTRL:ShowNotification(title, message, duration, notifType)
     titleLabel.Position = UDim2.new(0, 45 * scale, 0, 10 * scale)
     titleLabel.BackgroundTransparency = 1
     titleLabel.Text = title or "Notification"
-    titleLabel.TextColor3 = currentTheme.TextColor
+    titleLabel.TextColor3 = theme.TextColor
     titleLabel.Font = Enum.Font.GothamBold
     titleLabel.TextSize = 16 * scale
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -294,7 +249,7 @@ function YUUGTRL:ShowNotification(title, message, duration, notifType)
     messageLabel.Position = UDim2.new(0, 45 * scale, 0, 30 * scale)
     messageLabel.BackgroundTransparency = 1
     messageLabel.Text = message or ""
-    messageLabel.TextColor3 = currentTheme.TextColor
+    messageLabel.TextColor3 = theme.TextColor
     messageLabel.Font = Enum.Font.Gotham
     messageLabel.TextSize = 14 * scale
     messageLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -312,7 +267,7 @@ function YUUGTRL:ShowNotification(title, message, duration, notifType)
     closeBtn.Parent = notifFrame
     
     closeBtn.MouseEnter:Connect(function()
-        closeBtn.TextColor3 = currentTheme.DangerColor
+        closeBtn.TextColor3 = theme.DangerColor
     end)
     
     closeBtn.MouseLeave:Connect(function()
@@ -347,7 +302,7 @@ end
 function YUUGTRL:CreateButton(parent, text, callback, color, position, size)
     if not parent then return end
     
-    local btnColor = color or currentTheme.ButtonColor
+    local btnColor = color or theme.ButtonColor
     
     local btn = Create({
         type = "TextButton",
@@ -463,7 +418,7 @@ function YUUGTRL:CreateButtonToggle(parent, text, default, callback, position, s
     colors = colors or {}
     
     local isOn = default or false
-    local buttonColor = colors.off or currentTheme.ButtonColor
+    local buttonColor = colors.off or theme.ButtonColor
     if colors.on then
         buttonColor = colors.on
     end
@@ -592,8 +547,8 @@ end
 function YUUGTRL:CreateTextBox(parent, placeholder, text, callback, position, size, color)
     if not parent then return end
     
-    local frameColor = color or currentTheme.InputColor
-    local textColor = currentTheme.TextColor
+    local frameColor = color or theme.InputColor
+    local textColor = theme.TextColor
     
     local frame = self:CreateFrame(parent, size or UDim2.new(0, 200, 0, 35), position, frameColor, 8)
     
@@ -644,9 +599,9 @@ function YUUGTRL:CreateDropdown(parent, text, options, default, callback, positi
     if not parent then return end
     
     colors = colors or {}
-    local frameColor = colors.frame or currentTheme.InputColor
-    local buttonColor = colors.button or currentTheme.ButtonColor
-    local textColor = currentTheme.TextColor
+    local frameColor = colors.frame or theme.InputColor
+    local buttonColor = colors.button or theme.ButtonColor
+    local textColor = theme.TextColor
     
     local frame = self:CreateFrame(parent, size or UDim2.new(0, 200, 0, 35), position, frameColor, 8)
     
@@ -752,9 +707,9 @@ function YUUGTRL:CreateCheckbox(parent, text, default, callback, position, size,
     
     colors = colors or {}
     local isChecked = default or false
-    local frameColor = colors.frame or currentTheme.FrameColor
-    local checkColor = colors.check or currentTheme.AccentColor
-    local textColor = currentTheme.TextColor
+    local frameColor = colors.frame or theme.FrameColor
+    local checkColor = colors.check or theme.AccentColor
+    local textColor = theme.TextColor
     
     local frame = self:CreateFrame(parent, size or UDim2.new(0, 200, 0, 30), position, Color3.fromRGB(0, 0, 0, 0), 0)
     
@@ -831,7 +786,7 @@ end
 function YUUGTRL:CreateProgressBar(parent, initial, max, position, size, color)
     if not parent then return end
     
-    local barColor = color or currentTheme.AccentColor
+    local barColor = color or theme.AccentColor
     local currentValue = initial or 0
     local maxValue = max or 100
     
@@ -882,7 +837,7 @@ function YUUGTRL:CreateColorPicker(parent, default, callback, position, size)
     
     local currentColor = default or Color3.fromRGB(255, 255, 255)
     
-    local frame = self:CreateFrame(parent, size or UDim2.new(0, 250, 0, 300), position, currentTheme.FrameColor, 8)
+    local frame = self:CreateFrame(parent, size or UDim2.new(0, 250, 0, 300), position, theme.FrameColor, 8)
     
     local preview = self:CreateFrame(frame, UDim2.new(1, -20, 0, 50), UDim2.new(0, 10, 0, 10), currentColor, 8)
     
@@ -985,7 +940,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         type = "Frame",
         Size = windowSize,
         Position = windowPos,
-        BackgroundColor3 = options.MainColor or currentTheme.MainColor,
+        BackgroundColor3 = options.MainColor or theme.MainColor,
         BorderSizePixel = 0,
         Parent = ScreenGui
     })
@@ -997,7 +952,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     local Header = Create({
         type = "Frame",
         Size = UDim2.new(1, 0, 0, 40 * scale),
-        BackgroundColor3 = options.HeaderColor or currentTheme.HeaderColor,
+        BackgroundColor3 = options.HeaderColor or theme.HeaderColor,
         BorderSizePixel = 0,
         Parent = Main
     })
@@ -1013,26 +968,26 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     local tabsEnabled = options.enableTabs or false
     
     if tabsEnabled then
-        TabsContainer = self:CreateFrame(Main, UDim2.new(1, 0, 0, 40 * scale), UDim2.new(0, 0, 0, 40 * scale), currentTheme.HeaderColor, 0)
+        TabsContainer = self:CreateFrame(Main, UDim2.new(1, 0, 0, 40 * scale), UDim2.new(0, 0, 0, 40 * scale), theme.HeaderColor, 0)
         local tabsCorner = Instance.new("UICorner")
         tabsCorner.CornerRadius = UDim.new(0, 12 * scale)
         tabsCorner.Parent = TabsContainer
     end
     
-    local Title = self:CreateLabel(Header, title, UDim2.new(0, 15 * scale, 0, 0), UDim2.new(1, -100 * scale, 1, 0), options.TextColor or currentTheme.TextColor)
+    local Title = self:CreateLabel(Header, title, UDim2.new(0, 15 * scale, 0, 0), UDim2.new(1, -100 * scale, 1, 0), options.TextColor or theme.TextColor)
     Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.TextSize = 18 * scale
     if options.titleKey then
         self:RegisterTranslatable(Title, options.titleKey)
     end
     
-    local Content = self:CreateFrame(Main, UDim2.new(1, 0, 1, -(80 * scale)), UDim2.new(0, 0, 0, 80 * scale), currentTheme.MainColor, 0)
+    local Content = self:CreateFrame(Main, UDim2.new(1, 0, 1, -(80 * scale)), UDim2.new(0, 0, 0, 80 * scale), theme.MainColor, 0)
     
     local SettingsBtn
     local CloseBtn
     
     if options.ShowSettings ~= false then
-        SettingsBtn = self:CreateButton(Header, "⚙", nil, options.AccentColor or currentTheme.AccentColor, UDim2.new(1, -70 * scale, 0, 5 * scale), UDim2.new(0, 30 * scale, 0, 30 * scale))
+        SettingsBtn = self:CreateButton(Header, "⚙", nil, options.AccentColor or theme.AccentColor, UDim2.new(1, -70 * scale, 0, 5 * scale), UDim2.new(0, 30 * scale, 0, 30 * scale))
     end
     
     if options.ShowClose ~= false then
@@ -1100,7 +1055,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             
             for i, btn in ipairs(self.TabButtons) do
                 if i == tabIndex then
-                    self:RestoreButtonStyle(btn, currentTheme.AccentColor)
+                    self:RestoreButtonStyle(btn, theme.AccentColor)
                 else
                     self:DarkenButton(btn)
                 end
@@ -1111,7 +1066,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             end
             
             if not self.TabContents[tabIndex] then
-                local tabContent = self:CreateFrame(self.Content, UDim2.new(1, 0, 1, 0), UDim2.new(0, 0, 0, 0), currentTheme.MainColor, 0)
+                local tabContent = self:CreateFrame(self.Content, UDim2.new(1, 0, 1, 0), UDim2.new(0, 0, 0, 0), theme.MainColor, 0)
                 self.TabContents[tabIndex] = tabContent
                 if callback then
                     callback(tabContent)
@@ -1125,9 +1080,9 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         table.insert(self.TabButtons, tabButton)
         
         if tabIndex == 1 then
-            self:RestoreButtonStyle(tabButton, currentTheme.AccentColor)
+            self:RestoreButtonStyle(tabButton, theme.AccentColor)
             if callback then
-                local tabContent = self:CreateFrame(self.Content, UDim2.new(1, 0, 1, 0), UDim2.new(0, 0, 0, 0), currentTheme.MainColor, 0)
+                local tabContent = self:CreateFrame(self.Content, UDim2.new(1, 0, 1, 0), UDim2.new(0, 0, 0, 0), theme.MainColor, 0)
                 self.TabContents[tabIndex] = tabContent
                 callback(tabContent)
                 currentTab = tabIndex
@@ -1298,7 +1253,7 @@ function YUUGTRL:CreateFrame(parent, size, position, color, radius)
         type = "Frame",
         Size = size or UDim2.new(0, 100, 0, 100),
         Position = position or UDim2.new(0, 0, 0, 0),
-        BackgroundColor3 = color or currentTheme.FrameColor,
+        BackgroundColor3 = color or theme.FrameColor,
         BorderSizePixel = 0,
         Parent = parent
     })
@@ -1313,11 +1268,11 @@ function YUUGTRL:CreateScrollingFrame(parent, size, position, color, radius)
     local frame = Instance.new("ScrollingFrame")
     frame.Size = size or UDim2.new(0, 200, 0, 200)
     frame.Position = position or UDim2.new(0, 0, 0, 0)
-    frame.BackgroundColor3 = color or currentTheme.FrameColor
+    frame.BackgroundColor3 = color or theme.FrameColor
     frame.BackgroundTransparency = 0
     frame.BorderSizePixel = 0
     frame.ScrollBarThickness = 4
-    frame.ScrollBarImageColor3 = currentTheme.ScrollBarColor
+    frame.ScrollBarImageColor3 = theme.ScrollBarColor
     frame.CanvasSize = UDim2.new(0, 0, 0, 0)
     frame.AutomaticCanvasSize = Enum.AutomaticSize.Y
     frame.Parent = parent
@@ -1339,7 +1294,7 @@ function YUUGTRL:CreateLabel(parent, text, position, size, color)
         Position = position or UDim2.new(0, 0, 0, 0),
         BackgroundTransparency = 1,
         Text = text or "Label",
-        TextColor3 = color or currentTheme.TextColor,
+        TextColor3 = color or theme.TextColor,
         Font = Enum.Font.GothamBold,
         TextSize = 14,
         TextXAlignment = Enum.TextXAlignment.Left,
@@ -1349,7 +1304,7 @@ end
 
 function YUUGTRL:CreateSlider(parent, text, min, max, default, callback, position, size)
     if not parent then return end
-    local frame = self:CreateFrame(parent, size or UDim2.new(0, 200, 0, 50), position, currentTheme.FrameColor, 8)
+    local frame = self:CreateFrame(parent, size or UDim2.new(0, 200, 0, 50), position, theme.FrameColor, 8)
     
     self:CreateLabel(frame, text or "", UDim2.new(0, 10, 0, 5), UDim2.new(1, -60, 0, 20))
     
@@ -1358,7 +1313,7 @@ function YUUGTRL:CreateSlider(parent, text, min, max, default, callback, positio
     
     local slider = self:CreateFrame(frame, UDim2.new(1, -20, 0, 8), UDim2.new(0, 10, 0, 30), Color3.fromRGB(60, 60, 70), 4)
     
-    local fill = self:CreateFrame(slider, UDim2.new((default or 0) / max, 0, 1, 0), UDim2.new(0, 0, 0, 0), currentTheme.AccentColor, 4)
+    local fill = self:CreateFrame(slider, UDim2.new((default or 0) / max, 0, 1, 0), UDim2.new(0, 0, 0, 0), theme.AccentColor, 4)
     
     local dragging = false
     
