@@ -828,127 +828,6 @@ function YUUGTRL:CreateCheckbox(parent, text, default, callback, position, size,
     return checkboxObject
 end
 
-function YUUGTRL:CreateProgressBar(parent, initial, max, position, size, color)
-    if not parent then return end
-    
-    local barColor = color or currentTheme.AccentColor
-    local currentValue = initial or 0
-    local maxValue = max or 100
-    
-    local frame = self:CreateFrame(parent, size or UDim2.new(0, 200, 0, 20), position, Color3.fromRGB(60, 60, 70), 4)
-    
-    local fill = self:CreateFrame(frame, UDim2.new(currentValue / maxValue, 0, 1, 0), UDim2.new(0, 0, 0, 0), barColor, 4)
-    
-    local valueLabel = self:CreateLabel(frame, math.floor(currentValue) .. "/" .. maxValue, 
-        UDim2.new(0.5, -25, 0, 0), UDim2.new(0, 50, 1, 0), Color3.fromRGB(255, 255, 255))
-    valueLabel.TextXAlignment = Enum.TextXAlignment.Center
-    
-    local progressObject = {}
-    
-    function progressObject:SetValue(value)
-        currentValue = math.clamp(value, 0, maxValue)
-        TweenService:Create(fill, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
-            Size = UDim2.new(currentValue / maxValue, 0, 1, 0)
-        }):Play()
-        valueLabel.Text = math.floor(currentValue) .. "/" .. maxValue
-    end
-    
-    function progressObject:GetValue()
-        return currentValue
-    end
-    
-    function progressObject:SetMax(newMax)
-        maxValue = newMax
-        self:SetValue(currentValue)
-    end
-    
-    function progressObject:SetColor(newColor)
-        barColor = newColor
-        fill.BackgroundColor3 = barColor
-    end
-    
-    function progressObject:Destroy()
-        frame:Destroy()
-    end
-    
-    progressObject.frame = frame
-    progressObject.fill = fill
-    
-    return progressObject
-end
-
-function YUUGTRL:CreateColorPicker(parent, default, callback, position, size)
-    if not parent then return end
-    
-    local currentColor = default or Color3.fromRGB(255, 255, 255)
-    
-    local frame = self:CreateFrame(parent, size or UDim2.new(0, 250, 0, 300), position, currentTheme.FrameColor, 8)
-    
-    local preview = self:CreateFrame(frame, UDim2.new(1, -20, 0, 50), UDim2.new(0, 10, 0, 10), currentColor, 8)
-    
-    local rLabel = self:CreateLabel(frame, "Red: " .. math.floor(currentColor.R * 255), 
-        UDim2.new(0, 10, 0, 70), UDim2.new(0.3, -15, 0, 20))
-    
-    local rSlider = self:CreateSlider(frame, "", 0, 255, currentColor.R * 255, function(value)
-        currentColor = Color3.fromRGB(value, currentColor.G * 255, currentColor.B * 255)
-        preview.BackgroundColor3 = currentColor
-        rLabel.Text = "Red: " .. math.floor(value)
-        if callback then callback(currentColor) end
-    end, UDim2.new(0.35, 0, 70, 0), UDim2.new(0.6, -10, 0, 30))
-    
-    local gLabel = self:CreateLabel(frame, "Green: " .. math.floor(currentColor.G * 255), 
-        UDim2.new(0, 10, 0, 110), UDim2.new(0.3, -15, 0, 20))
-    
-    local gSlider = self:CreateSlider(frame, "", 0, 255, currentColor.G * 255, function(value)
-        currentColor = Color3.fromRGB(currentColor.R * 255, value, currentColor.B * 255)
-        preview.BackgroundColor3 = currentColor
-        gLabel.Text = "Green: " .. math.floor(value)
-        if callback then callback(currentColor) end
-    end, UDim2.new(0.35, 0, 110, 0), UDim2.new(0.6, -10, 0, 30))
-    
-    local bLabel = self:CreateLabel(frame, "Blue: " .. math.floor(currentColor.B * 255), 
-        UDim2.new(0, 10, 0, 150), UDim2.new(0.3, -15, 0, 20))
-    
-    local bSlider = self:CreateSlider(frame, "", 0, 255, currentColor.B * 255, function(value)
-        currentColor = Color3.fromRGB(currentColor.R * 255, currentColor.G * 255, value)
-        preview.BackgroundColor3 = currentColor
-        bLabel.Text = "Blue: " .. math.floor(value)
-        if callback then callback(currentColor) end
-    end, UDim2.new(0.35, 0, 150, 0), UDim2.new(0.6, -10, 0, 30))
-    
-    local hexLabel = self:CreateLabel(frame, "#" .. string.format("%02X%02X%02X", 
-        currentColor.R * 255, currentColor.G * 255, currentColor.B * 255), 
-        UDim2.new(0, 10, 0, 190), UDim2.new(1, -20, 0, 20))
-    hexLabel.TextXAlignment = Enum.TextXAlignment.Center
-    
-    local colorPickerObject = {}
-    
-    function colorPickerObject:GetColor()
-        return currentColor
-    end
-    
-    function colorPickerObject:SetColor(color)
-        currentColor = color
-        preview.BackgroundColor3 = currentColor
-        rSlider:FindFirstChildOfClass("Frame"):FindFirstChildOfClass("Frame").Size = UDim2.new(currentColor.R, 0, 1, 0)
-        gSlider:FindFirstChildOfClass("Frame"):FindFirstChildOfClass("Frame").Size = UDim2.new(currentColor.G, 0, 1, 0)
-        bSlider:FindFirstChildOfClass("Frame"):FindFirstChildOfClass("Frame").Size = UDim2.new(currentColor.B, 0, 1, 0)
-        rLabel.Text = "Red: " .. math.floor(currentColor.R * 255)
-        gLabel.Text = "Green: " .. math.floor(currentColor.G * 255)
-        bLabel.Text = "Blue: " .. math.floor(currentColor.B * 255)
-        hexLabel.Text = "#" .. string.format("%02X%02X%02X", currentColor.R * 255, currentColor.G * 255, currentColor.B * 255)
-    end
-    
-    function colorPickerObject:Destroy()
-        frame:Destroy()
-    end
-    
-    colorPickerObject.frame = frame
-    colorPickerObject.preview = preview
-    
-    return colorPickerObject
-end
-
 function YUUGTRL:CreateWindow(title, size, position, options)
     options = options or {}
     
@@ -1006,19 +885,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     headerCorner.CornerRadius = UDim.new(0, 12 * scale)
     headerCorner.Parent = Header
     
-    local TabsContainer
-    local TabButtons = {}
-    local TabContents = {}
-    local currentTab = nil
-    local tabsEnabled = options.enableTabs or false
-    
-    if tabsEnabled then
-        TabsContainer = self:CreateFrame(Main, UDim2.new(1, 0, 0, 40 * scale), UDim2.new(0, 0, 0, 40 * scale), currentTheme.HeaderColor, 0)
-        local tabsCorner = Instance.new("UICorner")
-        tabsCorner.CornerRadius = UDim.new(0, 12 * scale)
-        tabsCorner.Parent = TabsContainer
-    end
-    
     local Title = self:CreateLabel(Header, title, UDim2.new(0, 15 * scale, 0, 0), UDim2.new(1, -100 * scale, 1, 0), options.TextColor or currentTheme.TextColor)
     Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.TextSize = 18 * scale
@@ -1026,7 +892,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         self:RegisterTranslatable(Title, options.titleKey)
     end
     
-    local Content = self:CreateFrame(Main, UDim2.new(1, 0, 1, -(80 * scale)), UDim2.new(0, 0, 0, 80 * scale), currentTheme.MainColor, 0)
+    local Content = self:CreateFrame(Main, UDim2.new(1, 0, 1, -(40 * scale)), UDim2.new(0, 0, 0, 40 * scale), currentTheme.MainColor, 0)
     
     local SettingsBtn
     local CloseBtn
@@ -1080,64 +946,8 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         elements = {},
         scale = scale,
         options = options,
-        tabsEnabled = tabsEnabled,
-        TabsContainer = TabsContainer,
-        Content = Content,
-        TabButtons = TabButtons,
-        TabContents = TabContents
+        Content = Content
     }
-    
-    function window:AddTab(name, callback)
-        if not self.tabsEnabled then
-            warn("Tabs are not enabled for this window. Set options.enableTabs = true when creating window.")
-            return nil
-        end
-        
-        local tabIndex = #self.TabButtons + 1
-        
-        local tabButton = self:CreateButton(self.TabsContainer, name, function()
-            if currentTab == tabIndex then return end
-            
-            for i, btn in ipairs(self.TabButtons) do
-                if i == tabIndex then
-                    self:RestoreButtonStyle(btn, currentTheme.AccentColor)
-                else
-                    self:DarkenButton(btn)
-                end
-            end
-            
-            if self.TabContents[currentTab] then
-                self.TabContents[currentTab].Visible = false
-            end
-            
-            if not self.TabContents[tabIndex] then
-                local tabContent = self:CreateFrame(self.Content, UDim2.new(1, 0, 1, 0), UDim2.new(0, 0, 0, 0), currentTheme.MainColor, 0)
-                self.TabContents[tabIndex] = tabContent
-                if callback then
-                    callback(tabContent)
-                end
-            end
-            
-            self.TabContents[tabIndex].Visible = true
-            currentTab = tabIndex
-        end, nil, UDim2.new(0, (100 * (tabIndex-1)) * scale, 0, 5 * scale), UDim2.new(0, 100 * scale, 0, 30 * scale))
-        
-        table.insert(self.TabButtons, tabButton)
-        
-        if tabIndex == 1 then
-            self:RestoreButtonStyle(tabButton, currentTheme.AccentColor)
-            if callback then
-                local tabContent = self:CreateFrame(self.Content, UDim2.new(1, 0, 1, 0), UDim2.new(0, 0, 0, 0), currentTheme.MainColor, 0)
-                self.TabContents[tabIndex] = tabContent
-                callback(tabContent)
-                currentTab = tabIndex
-            end
-        else
-            self:DarkenButton(tabButton)
-        end
-        
-        return tabButton
-    end
     
     function window:SetMainColor(color)
         self.Main.BackgroundColor3 = color
@@ -1172,19 +982,19 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     function window:CreateFrame(size, position, color, radius)
         local frameSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
         local framePos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
-        return YUUGTRL:CreateFrame(self.Main, frameSize, framePos, color, radius and radius * self.scale)
+        return YUUGTRL:CreateFrame(self.Content, frameSize, framePos, color, radius and radius * self.scale)
     end
     
     function window:CreateScrollingFrame(size, position, color, radius)
         local frameSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
         local framePos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
-        return YUUGTRL:CreateScrollingFrame(self.Main, frameSize, framePos, color, radius and radius * self.scale)
+        return YUUGTRL:CreateScrollingFrame(self.Content, frameSize, framePos, color, radius and radius * self.scale)
     end
     
     function window:CreateLabel(text, position, size, color, translationKey)
         local labelPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
         local labelSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
-        local label = YUUGTRL:CreateLabel(self.Main, text, labelPos, labelSize, color)
+        local label = YUUGTRL:CreateLabel(self.Content, text, labelPos, labelSize, color)
         label.TextSize = label.TextSize * self.scale
         if translationKey then
             YUUGTRL:RegisterTranslatable(label, translationKey)
@@ -1196,7 +1006,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     function window:CreateButton(text, callback, color, position, size, translationKey)
         local btnPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
         local btnSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
-        local btn = YUUGTRL:CreateButton(self.Main, text, callback, color, btnPos, btnSize)
+        local btn = YUUGTRL:CreateButton(self.Content, text, callback, color, btnPos, btnSize)
         btn.TextSize = btn.TextSize * self.scale
         if translationKey then
             YUUGTRL:RegisterTranslatable(btn, translationKey)
@@ -1208,7 +1018,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     function window:CreateSlider(text, min, max, default, callback, position, size)
         local sliderPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
         local sliderSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
-        return YUUGTRL:CreateSlider(self.Main, text, min, max, default, callback, sliderPos, sliderSize)
+        return YUUGTRL:CreateSlider(self.Content, text, min, max, default, callback, sliderPos, sliderSize)
     end
     
     function window:SetSettingsCallback(callback)
@@ -1242,7 +1052,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             btnSize = UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale)
         end
         
-        local toggle = YUUGTRL:CreateButtonToggle(self.Main, text, default, callback, btnPos, btnSize, colors)
+        local toggle = YUUGTRL:CreateButtonToggle(self.Content, text, default, callback, btnPos, btnSize, colors)
         
         if translationKey and toggle and toggle.button then
             YUUGTRL:RegisterTranslatable(toggle.button, translationKey)
@@ -1258,7 +1068,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     function window:CreateTextBox(placeholder, text, callback, position, size, color, translationKey)
         local boxPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
         local boxSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
-        local textBox = YUUGTRL:CreateTextBox(self.Main, placeholder, text, callback, boxPos, boxSize, color)
+        local textBox = YUUGTRL:CreateTextBox(self.Content, placeholder, text, callback, boxPos, boxSize, color)
         if translationKey and textBox and textBox.textBox then
             YUUGTRL:RegisterTranslatable(textBox.textBox, translationKey)
         end
@@ -1268,25 +1078,13 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     function window:CreateDropdown(text, options, default, callback, position, size, colors, translationKey)
         local dropPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
         local dropSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
-        return YUUGTRL:CreateDropdown(self.Main, text, options, default, callback, dropPos, dropSize, colors)
+        return YUUGTRL:CreateDropdown(self.Content, text, options, default, callback, dropPos, dropSize, colors)
     end
     
     function window:CreateCheckbox(text, default, callback, position, size, colors, translationKey)
         local checkPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
         local checkSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
-        return YUUGTRL:CreateCheckbox(self.Main, text, default, callback, checkPos, checkSize, colors)
-    end
-    
-    function window:CreateProgressBar(initial, max, position, size, color)
-        local barPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
-        local barSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
-        return YUUGTRL:CreateProgressBar(self.Main, initial, max, barPos, barSize, color)
-    end
-    
-    function window:CreateColorPicker(default, callback, position, size)
-        local pickerPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
-        local pickerSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
-        return YUUGTRL:CreateColorPicker(self.Main, default, callback, pickerPos, pickerSize)
+        return YUUGTRL:CreateCheckbox(self.Content, text, default, callback, checkPos, checkSize, colors)
     end
     
     return window
