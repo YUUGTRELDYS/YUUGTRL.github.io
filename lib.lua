@@ -346,71 +346,6 @@ function YUUGTRL:RestoreButtonStyle(button, color)
     end
 end
 
--- НОВАЯ ФУНКЦИЯ: CreateResetButton
-function YUUGTRL:CreateResetButton(parent, text, callback, color, position, size)
-    if not parent then return end
-
-    local btnColor = color or currentTheme.DangerColor or Color3.fromRGB(220, 80, 80)
-    local originalColor = btnColor
-
-    local btn = self:CreateButton(parent, text, nil, btnColor, position, size)
-    
-    -- Сохраняем оригинальный цвет для восстановления
-    local resetObject = {
-        button = btn,
-        originalColor = originalColor,
-        darkenDuration = 0.3
-    }
-
-    -- Переопределяем callback с эффектом затемнения
-    if callback then
-        btn.MouseButton1Click:Connect(function()
-            -- Затемняем кнопку
-            self:DarkenButton(btn)
-            
-            -- Вызываем пользовательский callback
-            local success, err = pcall(callback)
-            
-            -- Ждем и восстанавливаем
-            task.wait(0.3)
-            self:RestoreButtonStyle(btn, originalColor)
-            
-            if not success then
-                warn("Reset button callback error:", err)
-            end
-        end)
-    end
-
-    -- Добавляем методы для управления кнопкой
-    function resetObject:SetColor(newColor)
-        originalColor = newColor
-        self:RestoreButtonStyle(btn, newColor)
-    end
-
-    function resetObject:GetColor()
-        return originalColor
-    end
-
-    function resetObject:SetDarkenDuration(duration)
-        self.darkenDuration = duration
-    end
-
-    function resetObject:SimulateClick()
-        -- Затемняем кнопку
-        YUUGTRL:DarkenButton(btn)
-        
-        -- Ждем и восстанавливаем
-        task.wait(self.darkenDuration or 0.3)
-        YUUGTRL:RestoreButtonStyle(btn, originalColor)
-    end
-
-    function resetObject:Destroy()
-        btn:Destroy()
-    end
-
-    return resetObject
-end
-
 function YUUGTRL:CreateButtonToggle(parent, text, default, callback, position, size, colors)
     if not parent then return end
 
@@ -1183,26 +1118,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         end
         table.insert(self.elements, {type = "button", obj = btn})
         return btn
-    end
-
-    -- НОВЫЙ МЕТОД: CreateResetButton для окна
-    function window:CreateResetButton(text, callback, color, position, size, translationKey)
-        local btnPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
-        local btnSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
-        
-        local resetObj = YUUGTRL:CreateResetButton(self.Main, text, callback, color, btnPos, btnSize)
-        
-        if translationKey and resetObj and resetObj.button then
-            YUUGTRL:RegisterTranslatable(resetObj.button, translationKey)
-            -- Устанавливаем белый текст для reset кнопки
-            resetObj.button.TextColor3 = Color3.fromRGB(255, 255, 255)
-        end
-        
-        if resetObj and resetObj.button then
-            table.insert(self.elements, {type = "reset-button", obj = resetObj})
-        end
-        
-        return resetObj
     end
 
     function window:CreateSlider(text, min, max, default, callback, position, size)
