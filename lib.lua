@@ -1002,9 +1002,14 @@ function YUUGTRL:CreateWindow(title, size, position, options)
 
     local SettingsBtn
     local CloseBtn
+    local HideBtn
 
     if options.ShowSettings ~= false then
-        SettingsBtn = self:CreateButton(Header, "⚙", nil, options.AccentColor or currentTheme.AccentColor, UDim2.new(1, -70 * scale, 0, 5 * scale), UDim2.new(0, 30 * scale, 0, 30 * scale))
+        SettingsBtn = self:CreateButton(Header, "⚙", nil, options.AccentColor or currentTheme.AccentColor, UDim2.new(1, -105 * scale, 0, 5 * scale), UDim2.new(0, 30 * scale, 0, 30 * scale))
+    end
+
+    if options.ShowHide ~= false then
+        HideBtn = self:CreateButton(Header, "➖", nil, options.HideColor or Color3.fromRGB(100, 150, 255), UDim2.new(1, -70 * scale, 0, 5 * scale), UDim2.new(0, 30 * scale, 0, 30 * scale))
     end
 
     if options.ShowClose ~= false then
@@ -1048,6 +1053,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         Header = Header,
         Title = Title,
         SettingsBtn = SettingsBtn,
+        HideBtn = HideBtn,
         CloseBtn = CloseBtn,
         elements = {},
         scale = scale,
@@ -1129,6 +1135,12 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     function window:SetSettingsCallback(callback)
         if SettingsBtn then
             SettingsBtn.MouseButton1Click:Connect(callback)
+        end
+    end
+
+    function window:SetHideCallback(callback)
+        if HideBtn then
+            HideBtn.MouseButton1Click:Connect(callback)
         end
     end
 
