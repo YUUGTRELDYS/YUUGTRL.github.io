@@ -978,7 +978,8 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         Position = windowPos,
         BackgroundColor3 = options.MainColor or currentTheme.MainColor,
         BorderSizePixel = 0,
-        Parent = ScreenGui
+        Parent = ScreenGui,
+        ClipsDescendants = true
     })
 
     Create({type = "UICorner",CornerRadius = UDim.new(0, 12 * scale),Parent = Main})
@@ -1057,7 +1058,8 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         CloseBtn = CloseBtn,
         elements = {},
         scale = scale,
-        options = options
+        options = options,
+        hideCallback = nil
     }
 
     function window:SetMainColor(color)
@@ -1139,8 +1141,13 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     end
 
     function window:SetHideCallback(callback)
+        self.hideCallback = callback
         if HideBtn then
-            HideBtn.MouseButton1Click:Connect(callback)
+            HideBtn.MouseButton1Click:Connect(function()
+                if self.hideCallback then
+                    self.hideCallback()
+                end
+            end)
         end
     end
 
