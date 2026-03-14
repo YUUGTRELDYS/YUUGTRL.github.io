@@ -940,6 +940,144 @@ function YUUGTRL:CreateWalkFlingButton(parent, text, default, callback, position
     return walkFlingObject
 end
 
+-- НОВАЯ ФУНКЦИЯ: Уведомления
+function YUUGTRL:ShowNotification(title, message, duration, color)
+    color = color or currentTheme.AccentColor or Color3.fromRGB(147, 69, 255)
+    duration = duration or 3
+    
+    local notifGui = Instance.new("ScreenGui")
+    notifGui.Name = "YUUGTRL_Notification"
+    notifGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    notifGui.DisplayOrder = 9999
+    notifGui.ResetOnSpawn = false
+    notifGui.Parent = player:WaitForChild("PlayerGui")
+    
+    local frame = Instance.new("Frame")
+    frame.Name = "MainFrame"
+    frame.Size = UDim2.new(0, 350, 0, 80)
+    frame.Position = UDim2.new(0.5, -175, 0, -100)
+    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    frame.BackgroundTransparency = 0.1
+    frame.BorderSizePixel = 2
+    frame.BorderColor3 = color
+    frame.ClipsDescendants = true
+    frame.Parent = notifGui
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 12)
+    corner.Parent = frame
+    
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 35)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 25))
+    })
+    gradient.Rotation = 90
+    gradient.Parent = frame
+    
+    local iconFrame = Instance.new("Frame")
+    iconFrame.Name = "IconFrame"
+    iconFrame.Size = UDim2.new(0, 40, 0, 40)
+    iconFrame.Position = UDim2.new(0, 15, 0.5, -20)
+    iconFrame.BackgroundColor3 = color
+    iconFrame.BackgroundTransparency = 0.2
+    iconFrame.BorderSizePixel = 0
+    iconFrame.Parent = frame
+    
+    local iconCorner = Instance.new("UICorner")
+    iconCorner.CornerRadius = UDim.new(1, 0)
+    iconCorner.Parent = iconFrame
+    
+    local iconText = Instance.new("TextLabel")
+    iconText.Name = "IconText"
+    iconText.Size = UDim2.new(1, 0, 1, 0)
+    iconText.BackgroundTransparency = 1
+    iconText.Text = "i"
+    iconText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    iconText.TextSize = 24
+    iconText.Font = Enum.Font.GothamBold
+    iconText.Parent = iconFrame
+    
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Name = "TitleLabel"
+    titleLabel.Size = UDim2.new(1, -70, 0, 30)
+    titleLabel.Position = UDim2.new(0, 65, 0, 10)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = title
+    titleLabel.TextColor3 = color
+    titleLabel.TextSize = 18
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.Parent = frame
+    
+    local messageLabel = Instance.new("TextLabel")
+    messageLabel.Name = "MessageLabel"
+    messageLabel.Size = UDim2.new(1, -70, 0, 30)
+    messageLabel.Position = UDim2.new(0, 65, 0, 40)
+    messageLabel.BackgroundTransparency = 1
+    messageLabel.Text = message
+    messageLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    messageLabel.TextSize = 14
+    messageLabel.Font = Enum.Font.Gotham
+    messageLabel.TextXAlignment = Enum.TextXAlignment.Left
+    messageLabel.TextWrapped = true
+    messageLabel.Parent = frame
+    
+    local lineContainer = Instance.new("Frame")
+    lineContainer.Name = "LineContainer"
+    lineContainer.Size = UDim2.new(1, -30, 0, 2)
+    lineContainer.Position = UDim2.new(0, 15, 1, -5)
+    lineContainer.BackgroundTransparency = 1
+    lineContainer.ClipsDescendants = true
+    lineContainer.Parent = frame
+    
+    local line = Instance.new("Frame")
+    line.Name = "Line"
+    line.Size = UDim2.new(1, 0, 1, 0)
+    line.Position = UDim2.new(0, 0, 0, 0)
+    line.BackgroundColor3 = color
+    line.BackgroundTransparency = 0.5
+    line.BorderSizePixel = 0
+    line.Parent = lineContainer
+    
+    local lineCorner = Instance.new("UICorner")
+    lineCorner.CornerRadius = UDim.new(0, 2)
+    lineCorner.Parent = line
+    
+    local tweenIn = TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -175, 0, 20)})
+    tweenIn:Play()
+    
+    local tweenIcon = TweenService:Create(iconFrame, TweenInfo.new(0.3), {BackgroundTransparency = 0})
+    tweenIcon:Play()
+    
+    local lineTween = TweenService:Create(line, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
+        Size = UDim2.new(0, 0, 1, 0),
+        Position = UDim2.new(0.5, 0, 0, 0)
+    })
+    lineTween:Play()
+    
+    task.wait(duration)
+    
+    local tweenOut = TweenService:Create(frame, TweenInfo.new(0.3), {Position = UDim2.new(0.5, -175, 0, -100), BackgroundTransparency = 1})
+    tweenOut:Play()
+    
+    for _, child in pairs(frame:GetChildren()) do
+        if child:IsA("TextLabel") then
+            TweenService:Create(child, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+        elseif child:IsA("Frame") and child ~= iconFrame and child ~= lineContainer then
+            TweenService:Create(child, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+        end
+    end
+    
+    TweenService:Create(iconFrame, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(iconText, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+    TweenService:Create(line, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+    
+    tweenOut.Completed:Connect(function()
+        notifGui:Destroy()
+    end)
+end
+
 function YUUGTRL:CreateWindow(title, size, position, options)
     options = options or {}
 
@@ -1235,6 +1373,10 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         end
 
         return walkFling
+    end
+
+    function window:ShowNotification(title, message, duration, color)
+        YUUGTRL:ShowNotification(title, message, duration, color)
     end
 
     return window
