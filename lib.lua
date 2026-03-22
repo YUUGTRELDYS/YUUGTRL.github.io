@@ -129,26 +129,10 @@ local themes = {
     }
 }
 local currentTheme = themes.dark
-local textBoxes = {}
-local windows = {}
 
 function YUUGTRL:SetTheme(themeName)
     if themes[themeName] then
         currentTheme = themes[themeName]
-        self:UpdateTextBoxesTheme()
-        for _, window in pairs(windows) do
-            if window and window.Main then
-                window.Main.BackgroundColor3 = currentTheme.MainColor
-                window.Header.BackgroundColor3 = currentTheme.HeaderColor
-                if window.Title then
-                    window.Title.TextColor3 = currentTheme.TextColor
-                end
-                if window.MainContainer then
-                    window.MainContainer.BackgroundColor3 = currentTheme.FrameColor
-                    window.MainContainer.ScrollBarImageColor3 = currentTheme.ScrollBarColor
-                end
-            end
-        end
         return true
     end
     return false
@@ -213,181 +197,6 @@ function YUUGTRL:UpdateAllTexts()
             table.remove(translatableElements, i)
         end
     end
-end
-
-local function updateTextBoxStyle(textBoxObj)
-    if not textBoxObj or not textBoxObj.frame then return end
-    
-    local theme = YUUGTRL:GetTheme()
-    local isFocused = textBoxObj.isFocused
-    
-    local bgColor = textBoxObj.customColors and textBoxObj.customColors.background or theme.InputColor
-    local borderColor = textBoxObj.customColors and textBoxObj.customColors.border or theme.AccentColor
-    local textColor = textBoxObj.customColors and textBoxObj.customColors.text or theme.TextColor
-    local placeholderColor = textBoxObj.customColors and textBoxObj.customColors.placeholder or Color3.fromRGB(150, 150, 150)
-    
-    if isFocused then
-        bgColor = textBoxObj.customColors and textBoxObj.customColors.focusedBackground or Color3.fromRGB(bgColor.R*255 + 10, bgColor.G*255 + 10, bgColor.B*255 + 10)
-        if textBoxObj.customColors and textBoxObj.customColors.focusedBorder then
-            borderColor = textBoxObj.customColors.focusedBorder
-        end
-    end
-    
-    textBoxObj.frame.BackgroundColor3 = bgColor
-    
-    if textBoxObj.border then
-        textBoxObj.border.BackgroundColor3 = borderColor
-        textBoxObj.border.BackgroundTransparency = isFocused and 0.3 or 0.8
-    end
-    
-    if textBoxObj.textBox then
-        textBoxObj.textBox.TextColor3 = textColor
-        textBoxObj.textBox.PlaceholderColor3 = placeholderColor
-    end
-    
-    if textBoxObj.label then
-        textBoxObj.label.TextColor3 = textColor
-    end
-end
-
-function YUUGTRL:UpdateTextBoxesTheme()
-    for _, textBoxObj in pairs(textBoxes) do
-        if textBoxObj and textBoxObj.frame and textBoxObj.frame.Parent then
-            updateTextBoxStyle(textBoxObj)
-        end
-    end
-end
-
-function YUUGTRL:CreateTextBox(parent, placeholder, defaultText, callback, position, size, customColors, labelText)
-    if not parent then return end
-    
-    local textBoxScale = parent.Parent and parent.Parent.scale or scale
-    
-    local frameSize = size or UDim2.new(1, -10, 0, 40)
-    local framePos = position or UDim2.new(0, 5, 0, 5)
-    
-    local frame = self:CreateFrame(parent, frameSize, framePos, (customColors and customColors.background or currentTheme.InputColor), 8)
-    
-    local border = Instance.new("Frame")
-    border.Size = UDim2.new(1, 0, 1, 0)
-    border.Position = UDim2.new(0, 0, 0, 0)
-    border.BackgroundColor3 = customColors and customColors.border or currentTheme.AccentColor
-    border.BackgroundTransparency = 0.8
-    border.BorderSizePixel = 0
-    border.Parent = frame
-    
-    local borderCorner = Instance.new("UICorner")
-    borderCorner.CornerRadius = UDim.new(0, 8 * textBoxScale)
-    borderCorner.Parent = border
-    
-    local textBox = Instance.new("TextBox")
-    textBox.Size = UDim2.new(1, -20, 1, 0)
-    textBox.Position = UDim2.new(0, 10, 0, 0)
-    textBox.BackgroundTransparency = 1
-    textBox.PlaceholderText = placeholder or "Enter text..."
-    textBox.Text = defaultText or ""
-    textBox.TextColor3 = customColors and customColors.text or currentTheme.TextColor
-    textBox.PlaceholderColor3 = customColors and customColors.placeholder or Color3.fromRGB(150, 150, 150)
-    textBox.Font = Enum.Font.Gotham
-    textBox.TextSize = 14 * textBoxScale
-    textBox.TextXAlignment = Enum.TextXAlignment.Left
-    textBox.ClipsDescendants = true
-    textBox.Parent = frame
-    
-    local label = nil
-    if labelText then
-        label = self:CreateLabel(frame, labelText, UDim2.new(0, 10, 1, -25), UDim2.new(1, -20, 0, 20), customColors and customColors.text or currentTheme.TextColor)
-        label.TextSize = 10 * textBoxScale
-        label.TextTransparency = 0.5
-        textBox.Position = UDim2.new(0, 10, 0, 5)
-        textBox.Size = UDim2.new(1, -20, 1, -25)
-    end
-    
-    local isFocused = false
-    
-    textBox.Focused:Connect(function()
-        isFocused = true
-        updateTextBoxStyle({
-            frame = frame,
-            border = border,
-            textBox = textBox,
-            label = label,
-            isFocused = true,
-            customColors = customColors
-        })
-    end)
-    
-    textBox.FocusLost:Connect(function(enterPressed)
-        isFocused = false
-        updateTextBoxStyle({
-            frame = frame,
-            border = border,
-            textBox = textBox,
-            label = label,
-            isFocused = false,
-            customColors = customColors
-        })
-        if callback then
-            pcall(callback, textBox.Text, enterPressed)
-        end
-    end)
-    
-    local textBoxObject = {
-        frame = frame,
-        border = border,
-        textBox = textBox,
-        label = label,
-        isFocused = isFocused,
-        customColors = customColors
-    }
-    
-    function textBoxObject:SetText(text)
-        self.textBox.Text = text or ""
-        if callback then
-            pcall(callback, self.textBox.Text, false)
-        end
-    end
-    
-    function textBoxObject:GetText()
-        return self.textBox.Text
-    end
-    
-    function textBoxObject:SetPlaceholder(text)
-        self.textBox.PlaceholderText = text
-    end
-    
-    function textBoxObject:SetColors(colors)
-        self.customColors = colors
-        updateTextBoxStyle(self)
-    end
-    
-    function textBoxObject:SetPosition(pos)
-        self.frame.Position = pos
-    end
-    
-    function textBoxObject:SetSize(sz)
-        self.frame.Size = sz
-    end
-    
-    function textBoxObject:Clear()
-        self.textBox.Text = ""
-        if callback then
-            pcall(callback, "", false)
-        end
-    end
-    
-    function textBoxObject:Destroy()
-        self.frame:Destroy()
-    end
-    
-    updateTextBoxStyle(textBoxObject)
-    table.insert(textBoxes, textBoxObject)
-    
-    return textBoxObject
-end
-
-function YUUGTRL:CreateLabeledTextBox(parent, placeholder, defaultText, callback, position, size, customColors, labelText)
-    return self:CreateTextBox(parent, placeholder, defaultText, callback, position, size, customColors, labelText or "Label")
 end
 
 local function Create(props)
@@ -1332,7 +1141,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     local SettingsBtn
     local CloseBtn
     local HideBtn
-    local isHidden = false
 
     if options.ShowSettings ~= false then
         SettingsBtn = self:CreateButton(Header, "⚙", nil, options.AccentColor or currentTheme.AccentColor, UDim2.new(1, -105 * scale, 0, 5 * scale), UDim2.new(0, 30 * scale, 0, 30 * scale))
@@ -1377,6 +1185,11 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         end
     end)
 
+    local isMinimized = false
+    local originalSize = windowSize
+    local mainContainer = nil
+    local hideBtnOriginalColor = options.HideColor or Color3.fromRGB(100, 150, 255)
+
     local window = {
         ScreenGui = ScreenGui,
         Main = Main,
@@ -1389,11 +1202,10 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         scale = scale,
         options = options,
         hideCallback = nil,
-        isHidden = false,
-        MainContainer = nil
+        isMinimized = false,
+        minimizedSize = UDim2.new(windowSize.X.Scale, windowSize.X.Offset, 0, 40 * scale),
+        mainContainer = nil
     }
-    
-    table.insert(windows, window)
 
     function window:SetMainColor(color)
         self.Main.BackgroundColor3 = color
@@ -1425,24 +1237,117 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         end
     end
 
+    function window:Minimize()
+        if self.isMinimized then return end
+        self.isMinimized = true
+        if self.mainContainer then
+            self.mainContainer.Visible = false
+        end
+        self.Main:TweenSize(self.minimizedSize, "Out", "Quad", 0.3, true)
+        if self.HideBtn then
+            local grad = self.HideBtn:FindFirstChildOfClass("UIGradient")
+            if grad then
+                local hoverColor = Color3.fromRGB(160, 90, 255)
+                local hoverDarker = Color3.fromRGB(
+                    math.max(hoverColor.R * 255 - 50, 0),
+                    math.max(hoverColor.G * 255 - 50, 0),
+                    math.max(hoverColor.B * 255 - 50, 0)
+                )
+                grad.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, hoverColor),
+                    ColorSequenceKeypoint.new(1, hoverDarker)
+                })
+            end
+            self.HideBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        end
+        if self.hideCallback then
+            self.hideCallback(true)
+        end
+    end
+
+    function window:Maximize()
+        if not self.isMinimized then return end
+        self.isMinimized = false
+        if self.mainContainer then
+            self.mainContainer.Visible = true
+        end
+        self.Main:TweenSize(originalSize, "Out", "Quad", 0.3, true)
+        if self.HideBtn then
+            local grad = self.HideBtn:FindFirstChildOfClass("UIGradient")
+            if grad then
+                local darker = Color3.fromRGB(
+                    math.max(hideBtnOriginalColor.R * 255 - 50, 0),
+                    math.max(hideBtnOriginalColor.G * 255 - 50, 0),
+                    math.max(hideBtnOriginalColor.B * 255 - 50, 0)
+                )
+                grad.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, hideBtnOriginalColor),
+                    ColorSequenceKeypoint.new(1, darker)
+                })
+            end
+            local brighter = Color3.fromRGB(
+                math.min(hideBtnOriginalColor.R * 255 + 200, 255),
+                math.min(hideBtnOriginalColor.G * 255 + 200, 255),
+                math.min(hideBtnOriginalColor.B * 255 + 200, 255)
+            )
+            self.HideBtn.TextColor3 = brighter
+        end
+        if self.hideCallback then
+            self.hideCallback(false)
+        end
+    end
+
+    function window:ToggleMinimize()
+        if self.isMinimized then
+            self:Maximize()
+        else
+            self:Minimize()
+        end
+    end
+
+    if HideBtn then
+        HideBtn.MouseButton1Click:Connect(function()
+            window:ToggleMinimize()
+        end)
+    end
+
     function window:CreateFrame(size, position, color, radius)
+        if not self.mainContainer then
+            self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
+                UDim2.new(1, 0, 1, -40 * self.scale), 
+                UDim2.new(0, 0, 0, 40 * self.scale),
+                self.options.MainColor or currentTheme.MainColor, 0)
+            self.mainContainer.BackgroundTransparency = 1
+        end
         local frameSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
         local framePos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
-        return YUUGTRL:CreateFrame(self.Main, frameSize, framePos, color, radius and radius * self.scale)
+        return YUUGTRL:CreateFrame(self.mainContainer, frameSize, framePos, color, radius and radius * self.scale)
     end
 
     function window:CreateScrollingFrame(size, position, color, radius)
+        if not self.mainContainer then
+            self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
+                UDim2.new(1, 0, 1, -40 * self.scale), 
+                UDim2.new(0, 0, 0, 40 * self.scale),
+                self.options.MainColor or currentTheme.MainColor, 0)
+            self.mainContainer.BackgroundTransparency = 1
+        end
         local frameSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
         local framePos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
-        local scrollingFrame = YUUGTRL:CreateScrollingFrame(self.Main, frameSize, framePos, color, radius and radius * self.scale)
-        self.MainContainer = scrollingFrame
-        return scrollingFrame
+        return YUUGTRL:CreateScrollingFrame(self.mainContainer, frameSize, framePos, color, radius and radius * self.scale)
     end
 
     function window:CreateLabel(text, position, size, color, translationKey)
+        if not self.mainContainer then
+            self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
+                UDim2.new(1, 0, 1, -40 * self.scale), 
+                UDim2.new(0, 0, 0, 40 * self.scale),
+                self.options.MainColor or currentTheme.MainColor, 0)
+            self.mainContainer.BackgroundTransparency = 1
+        end
         local labelPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
         local labelSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
-        local label = YUUGTRL:CreateLabel(self.Main, text, labelPos, labelSize, color)
+        local label = YUUGTRL:CreateLabel(self.mainContainer, text, labelPos, labelSize, color)
         label.TextSize = label.TextSize * self.scale
         if translationKey then
             YUUGTRL:RegisterTranslatable(label, translationKey)
@@ -1452,9 +1357,16 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     end
 
     function window:CreateButton(text, callback, color, position, size, translationKey)
+        if not self.mainContainer then
+            self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
+                UDim2.new(1, 0, 1, -40 * self.scale), 
+                UDim2.new(0, 0, 0, 40 * self.scale),
+                self.options.MainColor or currentTheme.MainColor, 0)
+            self.mainContainer.BackgroundTransparency = 1
+        end
         local btnPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
         local btnSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
-        local btn = YUUGTRL:CreateButton(self.Main, text, callback, color, btnPos, btnSize)
+        local btn = YUUGTRL:CreateButton(self.mainContainer, text, callback, color, btnPos, btnSize)
         btn.TextSize = btn.TextSize * self.scale
         if translationKey then
             YUUGTRL:RegisterTranslatable(btn, translationKey)
@@ -1464,15 +1376,16 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     end
 
     function window:CreateSlider(text, min, max, default, callback, position, size)
+        if not self.mainContainer then
+            self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
+                UDim2.new(1, 0, 1, -40 * self.scale), 
+                UDim2.new(0, 0, 0, 40 * self.scale),
+                self.options.MainColor or currentTheme.MainColor, 0)
+            self.mainContainer.BackgroundTransparency = 1
+        end
         local sliderPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
         local sliderSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
-        return YUUGTRL:CreateSlider(self.Main, text, min, max, default, callback, sliderPos, sliderSize)
-    end
-
-    function window:CreateTextBox(placeholder, defaultText, callback, position, size, customColors, labelText)
-        local boxPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
-        local boxSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
-        return YUUGTRL:CreateTextBox(self.Main, placeholder, defaultText, callback, boxPos, boxSize, customColors, labelText)
+        return YUUGTRL:CreateSlider(self.mainContainer, text, min, max, default, callback, sliderPos, sliderSize)
     end
 
     function window:SetSettingsCallback(callback)
@@ -1481,38 +1394,8 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         end
     end
 
-    function window:Hide()
-        if not self.isHidden then
-            self.isHidden = true
-            self.Main.Visible = false
-            if self.hideCallback then
-                self.hideCallback()
-            end
-        end
-    end
-    
-    function window:Show()
-        if self.isHidden then
-            self.isHidden = false
-            self.Main.Visible = true
-        end
-    end
-    
-    function window:Toggle()
-        if self.isHidden then
-            self:Show()
-        else
-            self:Hide()
-        end
-    end
-
     function window:SetHideCallback(callback)
         self.hideCallback = callback
-        if HideBtn then
-            HideBtn.MouseButton1Click:Connect(function()
-                self:Toggle()
-            end)
-        end
     end
 
     function window:SetCloseCallback(callback)
@@ -1523,12 +1406,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
 
     function window:Destroy()
         ScreenGui:Destroy()
-        for i, w in pairs(windows) do
-            if w == self then
-                table.remove(windows, i)
-                break
-            end
-        end
     end
 
     function window:UpdateLanguage()
@@ -1536,6 +1413,13 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     end
 
     function window:CreateButtonToggle(text, default, callback, position, size, colors, translationKey)
+        if not self.mainContainer then
+            self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
+                UDim2.new(1, 0, 1, -40 * self.scale), 
+                UDim2.new(0, 0, 0, 40 * self.scale),
+                self.options.MainColor or currentTheme.MainColor, 0)
+            self.mainContainer.BackgroundTransparency = 1
+        end
         local btnPos = position
         if btnPos then
             btnPos = UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale)
@@ -1546,7 +1430,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             btnSize = UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale)
         end
 
-        local toggle = YUUGTRL:CreateButtonToggle(self.Main, text, default, callback, btnPos, btnSize, colors)
+        local toggle = YUUGTRL:CreateButtonToggle(self.mainContainer, text, default, callback, btnPos, btnSize, colors)
 
         if translationKey and toggle and toggle.button then
             YUUGTRL:RegisterTranslatable(toggle.button, translationKey)
@@ -1560,6 +1444,13 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     end
 
     function window:CreateAntiSitButton(text, default, callback, position, size, colors, translationKey)
+        if not self.mainContainer then
+            self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
+                UDim2.new(1, 0, 1, -40 * self.scale), 
+                UDim2.new(0, 0, 0, 40 * self.scale),
+                self.options.MainColor or currentTheme.MainColor, 0)
+            self.mainContainer.BackgroundTransparency = 1
+        end
         local btnPos = position
         if btnPos then
             btnPos = UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale)
@@ -1570,7 +1461,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             btnSize = UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale)
         end
 
-        local antiSit = YUUGTRL:CreateAntiSitButton(self.Main, text, default, callback, btnPos, btnSize, colors)
+        local antiSit = YUUGTRL:CreateAntiSitButton(self.mainContainer, text, default, callback, btnPos, btnSize, colors)
 
         if translationKey and antiSit and antiSit.button then
             YUUGTRL:RegisterTranslatable(antiSit.button, translationKey)
@@ -1584,6 +1475,13 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     end
 
     function window:CreateWalkFlingButton(text, default, callback, position, size, colors, translationKey)
+        if not self.mainContainer then
+            self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
+                UDim2.new(1, 0, 1, -40 * self.scale), 
+                UDim2.new(0, 0, 0, 40 * self.scale),
+                self.options.MainColor or currentTheme.MainColor, 0)
+            self.mainContainer.BackgroundTransparency = 1
+        end
         local btnPos = position
         if btnPos then
             btnPos = UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale)
@@ -1594,7 +1492,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             btnSize = UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale)
         end
 
-        local walkFling = YUUGTRL:CreateWalkFlingButton(self.Main, text, default, callback, btnPos, btnSize, colors)
+        local walkFling = YUUGTRL:CreateWalkFlingButton(self.mainContainer, text, default, callback, btnPos, btnSize, colors)
 
         if translationKey and walkFling and walkFling.button then
             YUUGTRL:RegisterTranslatable(walkFling.button, translationKey)
