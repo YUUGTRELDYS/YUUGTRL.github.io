@@ -1151,7 +1151,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     end
 
     if options.ShowClose ~= false then
-        CloseBtn = self:CreateButton(Header, "✕", nil, options.CloseColor or Color3.fromRGB(255, 100, 100), UDim2.new(1, -35 * scale, 0, 5 * scale), UDim2.new(0, 30 * scale, 0, 30 * scale))
+        CloseBtn = self:CreateButton(Header, "X", nil, options.CloseColor or Color3.fromRGB(255, 100, 100), UDim2.new(1, -35 * scale, 0, 5 * scale), UDim2.new(0, 30 * scale, 0, 30 * scale))
         CloseBtn.MouseButton1Click:Connect(function() 
             ScreenGui:Destroy() 
         end)
