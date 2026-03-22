@@ -130,11 +130,25 @@ local themes = {
 }
 local currentTheme = themes.dark
 local textBoxes = {}
+local windows = {}
 
 function YUUGTRL:SetTheme(themeName)
     if themes[themeName] then
         currentTheme = themes[themeName]
         self:UpdateTextBoxesTheme()
+        for _, window in pairs(windows) do
+            if window and window.Main then
+                window.Main.BackgroundColor3 = currentTheme.MainColor
+                window.Header.BackgroundColor3 = currentTheme.HeaderColor
+                if window.Title then
+                    window.Title.TextColor3 = currentTheme.TextColor
+                end
+                if window.MainContainer then
+                    window.MainContainer.BackgroundColor3 = currentTheme.FrameColor
+                    window.MainContainer.ScrollBarImageColor3 = currentTheme.ScrollBarColor
+                end
+            end
+        end
         return true
     end
     return false
@@ -1318,6 +1332,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     local SettingsBtn
     local CloseBtn
     local HideBtn
+    local isHidden = false
 
     if options.ShowSettings ~= false then
         SettingsBtn = self:CreateButton(Header, "⚙", nil, options.AccentColor or currentTheme.AccentColor, UDim2.new(1, -105 * scale, 0, 5 * scale), UDim2.new(0, 30 * scale, 0, 30 * scale))
@@ -1373,8 +1388,12 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         elements = {},
         scale = scale,
         options = options,
-        hideCallback = nil
+        hideCallback = nil,
+        isHidden = false,
+        MainContainer = nil
     }
+    
+    table.insert(windows, window)
 
     function window:SetMainColor(color)
         self.Main.BackgroundColor3 = color
@@ -1415,7 +1434,9 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     function window:CreateScrollingFrame(size, position, color, radius)
         local frameSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
         local framePos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
-        return YUUGTRL:CreateScrollingFrame(self.Main, frameSize, framePos, color, radius and radius * self.scale)
+        local scrollingFrame = YUUGTRL:CreateScrollingFrame(self.Main, frameSize, framePos, color, radius and radius * self.scale)
+        self.MainContainer = scrollingFrame
+        return scrollingFrame
     end
 
     function window:CreateLabel(text, position, size, color, translationKey)
@@ -1460,13 +1481,36 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         end
     end
 
+    function window:Hide()
+        if not self.isHidden then
+            self.isHidden = true
+            self.Main.Visible = false
+            if self.hideCallback then
+                self.hideCallback()
+            end
+        end
+    end
+    
+    function window:Show()
+        if self.isHidden then
+            self.isHidden = false
+            self.Main.Visible = true
+        end
+    end
+    
+    function window:Toggle()
+        if self.isHidden then
+            self:Show()
+        else
+            self:Hide()
+        end
+    end
+
     function window:SetHideCallback(callback)
         self.hideCallback = callback
         if HideBtn then
             HideBtn.MouseButton1Click:Connect(function()
-                if self.hideCallback then
-                    self.hideCallback()
-                end
+                self:Toggle()
             end)
         end
     end
@@ -1479,6 +1523,12 @@ function YUUGTRL:CreateWindow(title, size, position, options)
 
     function window:Destroy()
         ScreenGui:Destroy()
+        for i, w in pairs(windows) do
+            if w == self then
+                table.remove(windows, i)
+                break
+            end
+        end
     end
 
     function window:UpdateLanguage()
