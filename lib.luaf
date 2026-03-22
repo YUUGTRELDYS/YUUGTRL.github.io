@@ -699,7 +699,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     end
 
     if options.ShowHide ~= false then
-        HideBtn = self:CreateButton(Header, "➖", nil, options.HideColor or Color3.fromRGB(100, 150, 255), UDim2.new(1, -70 * scale, 0, 5 * scale), UDim2.new(0, 30 * scale, 0, 30 * scale))
+        HideBtn = self:CreateButton(Header, "—", nil, options.HideColor or Color3.fromRGB(100, 150, 255), UDim2.new(1, -70 * scale, 0, 5 * scale), UDim2.new(0, 30 * scale, 0, 30 * scale))
     end
 
     if options.ShowClose ~= false then
@@ -795,9 +795,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             self.mainContainer.Visible = false
         end
         self.Main:TweenSize(self.minimizedSize, "Out", "Quad", 0.3, true)
-        if self.HideBtn then
-            self.HideBtn.Text = "➕"
-        end
         if self.hideCallback then
             self.hideCallback(true)
         end
@@ -810,9 +807,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             self.mainContainer.Visible = true
         end
         self.Main:TweenSize(originalSize, "Out", "Quad", 0.3, true)
-        if self.HideBtn then
-            self.HideBtn.Text = "➖"
-        end
         if self.hideCallback then
             self.hideCallback(false)
         end
