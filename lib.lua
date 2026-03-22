@@ -940,7 +940,6 @@ function YUUGTRL:CreateWalkFlingButton(parent, text, default, callback, position
     return walkFlingObject
 end
 
--- НОВАЯ ФУНКЦИЯ: Уведомления
 function YUUGTRL:ShowNotification(title, message, duration, color)
     color = color or currentTheme.AccentColor or Color3.fromRGB(147, 69, 255)
     duration = duration or 3
