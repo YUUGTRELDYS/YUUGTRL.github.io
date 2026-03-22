@@ -1188,6 +1188,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     local isMinimized = false
     local originalSize = windowSize
     local mainContainer = nil
+    local hideBtnOriginalColor = options.HideColor or Color3.fromRGB(100, 150, 255)
 
     local window = {
         ScreenGui = ScreenGui,
@@ -1243,6 +1244,22 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             self.mainContainer.Visible = false
         end
         self.Main:TweenSize(self.minimizedSize, "Out", "Quad", 0.3, true)
+        if self.HideBtn then
+            local grad = self.HideBtn:FindFirstChildOfClass("UIGradient")
+            if grad then
+                local hoverColor = Color3.fromRGB(160, 90, 255)
+                local hoverDarker = Color3.fromRGB(
+                    math.max(hoverColor.R * 255 - 50, 0),
+                    math.max(hoverColor.G * 255 - 50, 0),
+                    math.max(hoverColor.B * 255 - 50, 0)
+                )
+                grad.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, hoverColor),
+                    ColorSequenceKeypoint.new(1, hoverDarker)
+                })
+            end
+            self.HideBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        end
         if self.hideCallback then
             self.hideCallback(true)
         end
@@ -1255,6 +1272,26 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             self.mainContainer.Visible = true
         end
         self.Main:TweenSize(originalSize, "Out", "Quad", 0.3, true)
+        if self.HideBtn then
+            local grad = self.HideBtn:FindFirstChildOfClass("UIGradient")
+            if grad then
+                local darker = Color3.fromRGB(
+                    math.max(hideBtnOriginalColor.R * 255 - 50, 0),
+                    math.max(hideBtnOriginalColor.G * 255 - 50, 0),
+                    math.max(hideBtnOriginalColor.B * 255 - 50, 0)
+                )
+                grad.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, hideBtnOriginalColor),
+                    ColorSequenceKeypoint.new(1, darker)
+                })
+            end
+            local brighter = Color3.fromRGB(
+                math.min(hideBtnOriginalColor.R * 255 + 200, 255),
+                math.min(hideBtnOriginalColor.G * 255 + 200, 255),
+                math.min(hideBtnOriginalColor.B * 255 + 200, 255)
+            )
+            self.HideBtn.TextColor3 = brighter
+        end
         if self.hideCallback then
             self.hideCallback(false)
         end
