@@ -129,10 +129,48 @@ local themes = {
     }
 }
 local currentTheme = themes.dark
+local textBoxes = {}
+
+local function updateTextBoxStyle(textBoxObj)
+    if not textBoxObj or not textBoxObj.frame then return end
+    local theme = YUUGTRL:GetTheme()
+    local isFocused = textBoxObj.isFocused
+    local bgColor = textBoxObj.customColors and textBoxObj.customColors.background or theme.InputColor
+    local borderColor = textBoxObj.customColors and textBoxObj.customColors.border or theme.AccentColor
+    local textColor = textBoxObj.customColors and textBoxObj.customColors.text or theme.TextColor
+    local placeholderColor = textBoxObj.customColors and textBoxObj.customColors.placeholder or Color3.fromRGB(150, 150, 150)
+    if isFocused then
+        bgColor = textBoxObj.customColors and textBoxObj.customColors.focusedBackground or Color3.fromRGB(bgColor.R*255 + 10, bgColor.G*255 + 10, bgColor.B*255 + 10)
+        if textBoxObj.customColors and textBoxObj.customColors.focusedBorder then
+            borderColor = textBoxObj.customColors.focusedBorder
+        end
+    end
+    textBoxObj.frame.BackgroundColor3 = bgColor
+    if textBoxObj.border then
+        textBoxObj.border.BackgroundColor3 = borderColor
+        textBoxObj.border.BackgroundTransparency = isFocused and 0.3 or 0.8
+    end
+    if textBoxObj.textBox then
+        textBoxObj.textBox.TextColor3 = textColor
+        textBoxObj.textBox.PlaceholderColor3 = placeholderColor
+    end
+    if textBoxObj.label then
+        textBoxObj.label.TextColor3 = textColor
+    end
+end
+
+function YUUGTRL:UpdateTextBoxesTheme()
+    for _, textBoxObj in pairs(textBoxes) do
+        if textBoxObj and textBoxObj.frame and textBoxObj.frame.Parent then
+            updateTextBoxStyle(textBoxObj)
+        end
+    end
+end
 
 function YUUGTRL:SetTheme(themeName)
     if themes[themeName] then
         currentTheme = themes[themeName]
+        self:UpdateTextBoxesTheme()
         return true
     end
     return false
@@ -223,9 +261,7 @@ end
 
 function YUUGTRL:CreateButton(parent, text, callback, color, position, size)
     if not parent then return end
-
     local btnColor = color or currentTheme.ButtonColor
-
     local btn = Create({
         type = "TextButton",
         Size = size or UDim2.new(0, 120 * scale, 0, 35 * scale),
@@ -237,17 +273,14 @@ function YUUGTRL:CreateButton(parent, text, callback, color, position, size)
         TextSize = 14 * scale,
         Parent = parent
     })
-
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 8 * scale)
     corner.Parent = btn
-
     local darker = Color3.fromRGB(
         math.max(btnColor.R * 255 - 50, 0),
         math.max(btnColor.G * 255 - 50, 0),
         math.max(btnColor.B * 255 - 50, 0)
     )
-
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, btnColor),
@@ -255,19 +288,16 @@ function YUUGTRL:CreateButton(parent, text, callback, color, position, size)
     })
     gradient.Rotation = 90
     gradient.Parent = btn
-
     local brighter = Color3.fromRGB(
         math.min(btnColor.R * 255 + 200, 255),
         math.min(btnColor.G * 255 + 200, 255),
         math.min(btnColor.B * 255 + 200, 255)
     )
-    
     if IsEmojiOrSymbol(text) then
         btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     else
         btn.TextColor3 = brighter
     end
-
     btn.MouseEnter:Connect(function()
         local hoverColor = Color3.fromRGB(
             math.min(btnColor.R * 255 + 30, 255),
@@ -287,7 +317,6 @@ function YUUGTRL:CreateButton(parent, text, callback, color, position, size)
             btn.TextColor3 = Color3.fromRGB(255, 255, 255)
         end
     end)
-
     btn.MouseLeave:Connect(function()
         gradient.Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, btnColor),
@@ -297,11 +326,9 @@ function YUUGTRL:CreateButton(parent, text, callback, color, position, size)
             btn.TextColor3 = brighter
         end
     end)
-
     if callback then
         btn.MouseButton1Click:Connect(callback)
     end
-
     return btn
 end
 
@@ -348,15 +375,12 @@ end
 
 function YUUGTRL:CreateButtonToggle(parent, text, default, callback, position, size, colors)
     if not parent then return end
-
     colors = colors or {}
     local isOn = default or false
-
     local buttonColor = colors.off or currentTheme.ButtonColor
     if colors.on then
         buttonColor = colors.on
     end
-
     local button = Instance.new("TextButton")
     button.Size = size or UDim2.new(0, 120 * scale, 0, 35 * scale)
     button.Position = position or UDim2.new(0, 0, 0, 0)
@@ -366,21 +390,17 @@ function YUUGTRL:CreateButtonToggle(parent, text, default, callback, position, s
     button.Font = Enum.Font.GothamBold
     button.TextSize = 14 * scale
     button.Parent = parent
-
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 8 * scale)
     corner.Parent = button
-
     local gradient = Instance.new("UIGradient")
     gradient.Rotation = 90
     gradient.Parent = button
-
     local brighter = Color3.fromRGB(
         math.min(buttonColor.R * 255 + 200, 255),
         math.min(buttonColor.G * 255 + 200, 255),
         math.min(buttonColor.B * 255 + 200, 255)
     )
-
     local function updateGradient()
         local grad = button:FindFirstChildOfClass("UIGradient")
         if not grad then
@@ -388,7 +408,6 @@ function YUUGTRL:CreateButtonToggle(parent, text, default, callback, position, s
             grad.Rotation = 90
             grad.Parent = button
         end
-
         local currentColor = buttonColor
         local darkAmount = isOn and 70 or 50
         local darker2 = Color3.fromRGB(
@@ -396,12 +415,10 @@ function YUUGTRL:CreateButtonToggle(parent, text, default, callback, position, s
             math.max(currentColor.G * 255 - darkAmount, 0),
             math.max(currentColor.B * 255 - darkAmount, 0)
         )
-
         grad.Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, isOn and darker2 or currentColor),
             ColorSequenceKeypoint.new(1, darker2)
         })
-
         if not IsEmojiOrSymbol(button.Text) then
             if isOn then
                 button.TextColor3 = Color3.fromRGB(
@@ -414,9 +431,7 @@ function YUUGTRL:CreateButtonToggle(parent, text, default, callback, position, s
             end
         end
     end
-
     updateGradient()
-
     button.MouseEnter:Connect(function()
         local currentColor = buttonColor
         local hoverColor = Color3.fromRGB(
@@ -429,7 +444,6 @@ function YUUGTRL:CreateButtonToggle(parent, text, default, callback, position, s
             math.max(hoverColor.G * 255 - 50, 0),
             math.max(hoverColor.B * 255 - 50, 0)
         )
-
         local grad = button:FindFirstChildOfClass("UIGradient")
         if grad then
             grad.Color = ColorSequence.new({
@@ -437,16 +451,13 @@ function YUUGTRL:CreateButtonToggle(parent, text, default, callback, position, s
                 ColorSequenceKeypoint.new(1, hoverDarker)
             })
         end
-
         if not IsEmojiOrSymbol(button.Text) then
             button.TextColor3 = Color3.fromRGB(255, 255, 255)
         end
     end)
-
     button.MouseLeave:Connect(function()
         updateGradient()
     end)
-
     button.MouseButton1Click:Connect(function()
         isOn = not isOn
         updateGradient()
@@ -454,41 +465,32 @@ function YUUGTRL:CreateButtonToggle(parent, text, default, callback, position, s
             pcall(callback, isOn)
         end
     end)
-
     local toggleObject = {}
-
     function toggleObject:SetState(state)
         isOn = state
         updateGradient()
         if callback then pcall(callback, isOn) end
     end
-
     function toggleObject:GetState()
         return isOn
     end
-
     function toggleObject:Toggle()
         isOn = not isOn
         updateGradient()
         if callback then pcall(callback, isOn) end
     end
-
     function toggleObject:SetText(newText)
         button.Text = newText
     end
-
     function toggleObject:SetColors(newColors)
         if newColors.on then buttonColor = newColors.on end
         if newColors.off then buttonColor = newColors.off end
         updateGradient()
     end
-
     function toggleObject:Destroy()
         button:Destroy()
     end
-
     toggleObject.button = button
-
     return toggleObject
 end
 
@@ -497,16 +499,13 @@ local walkFlingInstances = {}
 
 function YUUGTRL:CreateAntiSitButton(parent, text, default, callback, position, size, colors)
     if not parent then return end
-
     local antiSitEnabled = default or false
     local antiSitConnection = nil
-
     local colors = colors or {}
     local buttonColor = colors.off or currentTheme.ButtonColor
     if colors.on then
         buttonColor = colors.on
     end
-
     local button = Instance.new("TextButton")
     button.Size = size or UDim2.new(0, 140 * scale, 0, 40 * scale)
     button.Position = position or UDim2.new(0, 0, 0, 0)
@@ -516,21 +515,17 @@ function YUUGTRL:CreateAntiSitButton(parent, text, default, callback, position, 
     button.Font = Enum.Font.GothamBold
     button.TextSize = 14 * scale
     button.Parent = parent
-
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 8 * scale)
     corner.Parent = button
-
     local gradient = Instance.new("UIGradient")
     gradient.Rotation = 90
     gradient.Parent = button
-
     local brighter = Color3.fromRGB(
         math.min(buttonColor.R * 255 + 200, 255),
         math.min(buttonColor.G * 255 + 200, 255),
         math.min(buttonColor.B * 255 + 200, 255)
     )
-
     local function updateGradient()
         local grad = button:FindFirstChildOfClass("UIGradient")
         if not grad then
@@ -538,7 +533,6 @@ function YUUGTRL:CreateAntiSitButton(parent, text, default, callback, position, 
             grad.Rotation = 90
             grad.Parent = button
         end
-
         local currentColor = buttonColor
         local darkAmount = antiSitEnabled and 70 or 50
         local darker2 = Color3.fromRGB(
@@ -546,12 +540,10 @@ function YUUGTRL:CreateAntiSitButton(parent, text, default, callback, position, 
             math.max(currentColor.G * 255 - darkAmount, 0),
             math.max(currentColor.B * 255 - darkAmount, 0)
         )
-
         grad.Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, antiSitEnabled and darker2 or currentColor),
             ColorSequenceKeypoint.new(1, darker2)
         })
-
         if not IsEmojiOrSymbol(button.Text) then
             if antiSitEnabled then
                 button.TextColor3 = Color3.fromRGB(
@@ -564,7 +556,6 @@ function YUUGTRL:CreateAntiSitButton(parent, text, default, callback, position, 
             end
         end
     end
-
     local function updateCharacter()
         local char = player.Character
         if char and char:FindFirstChild("Humanoid") then
@@ -572,13 +563,11 @@ function YUUGTRL:CreateAntiSitButton(parent, text, default, callback, position, 
         end
         return nil
     end
-
     local function startAntiSit()
         local humanoid = updateCharacter()
         if humanoid then
             humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
         end
-
         if antiSitConnection then antiSitConnection:Disconnect() end
         antiSitConnection = RunService.Heartbeat:Connect(function()
             local char = player.Character
@@ -590,7 +579,6 @@ function YUUGTRL:CreateAntiSitButton(parent, text, default, callback, position, 
             end
         end)
     end
-
     local function stopAntiSit()
         if antiSitConnection then
             antiSitConnection:Disconnect()
@@ -601,9 +589,7 @@ function YUUGTRL:CreateAntiSitButton(parent, text, default, callback, position, 
             humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
         end
     end
-
     updateGradient()
-
     button.MouseEnter:Connect(function()
         local currentColor = buttonColor
         local hoverColor = Color3.fromRGB(
@@ -616,7 +602,6 @@ function YUUGTRL:CreateAntiSitButton(parent, text, default, callback, position, 
             math.max(hoverColor.G * 255 - 50, 0),
             math.max(hoverColor.B * 255 - 50, 0)
         )
-
         local grad = button:FindFirstChildOfClass("UIGradient")
         if grad then
             grad.Color = ColorSequence.new({
@@ -624,16 +609,13 @@ function YUUGTRL:CreateAntiSitButton(parent, text, default, callback, position, 
                 ColorSequenceKeypoint.new(1, hoverDarker)
             })
         end
-
         if not IsEmojiOrSymbol(button.Text) then
             button.TextColor3 = Color3.fromRGB(255, 255, 255)
         end
     end)
-
     button.MouseLeave:Connect(function()
         updateGradient()
     end)
-
     button.MouseButton1Click:Connect(function()
         antiSitEnabled = not antiSitEnabled
         if antiSitEnabled then
@@ -646,7 +628,6 @@ function YUUGTRL:CreateAntiSitButton(parent, text, default, callback, position, 
             pcall(callback, antiSitEnabled)
         end
     end)
-
     player.CharacterAdded:Connect(function()
         if antiSitEnabled then
             task.wait(0.5)
@@ -656,9 +637,7 @@ function YUUGTRL:CreateAntiSitButton(parent, text, default, callback, position, 
             end
         end
     end)
-
     local antiSitObject = {}
-
     function antiSitObject:SetState(state)
         antiSitEnabled = state
         if antiSitEnabled then
@@ -669,11 +648,9 @@ function YUUGTRL:CreateAntiSitButton(parent, text, default, callback, position, 
         updateGradient()
         if callback then pcall(callback, antiSitEnabled) end
     end
-
     function antiSitObject:GetState()
         return antiSitEnabled
     end
-
     function antiSitObject:Toggle()
         antiSitEnabled = not antiSitEnabled
         if antiSitEnabled then
@@ -684,44 +661,36 @@ function YUUGTRL:CreateAntiSitButton(parent, text, default, callback, position, 
         updateGradient()
         if callback then pcall(callback, antiSitEnabled) end
     end
-
     function antiSitObject:SetText(newText)
         button.Text = newText
     end
-
     function antiSitObject:SetColors(newColors)
         if newColors.on then buttonColor = newColors.on end
         if newColors.off then buttonColor = newColors.off end
         updateGradient()
     end
-
     function antiSitObject:Destroy()
         if antiSitConnection then antiSitConnection:Disconnect() end
         button:Destroy()
     end
-
     antiSitObject.button = button
     table.insert(antiSitInstances, antiSitObject)
-
     return antiSitObject
 end
 
 function YUUGTRL:CreateWalkFlingButton(parent, text, default, callback, position, size, colors)
     if not parent then return end
-
     local walkFlingEnabled = default or false
     local walkFlingConnection = nil
     local jumpConnection = nil
     local character = nil
     local root = nil
     local humanoid = nil
-
     local colors = colors or {}
     local buttonColor = colors.off or currentTheme.ButtonColor
     if colors.on then
         buttonColor = colors.on
     end
-
     local button = Instance.new("TextButton")
     button.Size = size or UDim2.new(0, 140 * scale, 0, 40 * scale)
     button.Position = position or UDim2.new(0, 0, 0, 0)
@@ -731,21 +700,17 @@ function YUUGTRL:CreateWalkFlingButton(parent, text, default, callback, position
     button.Font = Enum.Font.GothamBold
     button.TextSize = 14 * scale
     button.Parent = parent
-
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 8 * scale)
     corner.Parent = button
-
     local gradient = Instance.new("UIGradient")
     gradient.Rotation = 90
     gradient.Parent = button
-
     local brighter = Color3.fromRGB(
         math.min(buttonColor.R * 255 + 200, 255),
         math.min(buttonColor.G * 255 + 200, 255),
         math.min(buttonColor.B * 255 + 200, 255)
     )
-
     local function updateCharacter()
         character = player.Character
         if character then
@@ -753,23 +718,18 @@ function YUUGTRL:CreateWalkFlingButton(parent, text, default, callback, position
             humanoid = character:FindFirstChild("Humanoid")
         end
     end
-
     local function startWalkFling()
         updateCharacter()
         if not character or not root or not humanoid then return end
-
         root.CanCollide = false
         humanoid:ChangeState(11)
-
         if jumpConnection then jumpConnection:Disconnect() end
         jumpConnection = UserInputService.JumpRequest:Connect(function()
             if humanoid and humanoid.Health > 0 then
                 humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
             end
         end)
-
         if walkFlingConnection then walkFlingConnection:Disconnect() end
-
         walkFlingConnection = RunService.Heartbeat:Connect(function()
             if not walkFlingEnabled or not root or not humanoid then return end
             if humanoid.Health <= 0 then 
@@ -777,7 +737,6 @@ function YUUGTRL:CreateWalkFlingButton(parent, text, default, callback, position
                 updateGradient()
                 return 
             end
-
             local vel = root.Velocity
             root.Velocity = vel * 10000 + Vector3.new(0, 10000, 0)
             RunService.RenderStepped:Wait()
@@ -786,7 +745,6 @@ function YUUGTRL:CreateWalkFlingButton(parent, text, default, callback, position
             if root then root.Velocity = vel + Vector3.new(0, 0.1, 0) end
         end)
     end
-
     local function stopWalkFling()
         if walkFlingConnection then 
             walkFlingConnection:Disconnect() 
@@ -799,7 +757,6 @@ function YUUGTRL:CreateWalkFlingButton(parent, text, default, callback, position
         if root then root.CanCollide = true end
         if humanoid then humanoid:ChangeState(Enum.HumanoidStateType.Running) end
     end
-
     local function updateGradient()
         local grad = button:FindFirstChildOfClass("UIGradient")
         if not grad then
@@ -807,7 +764,6 @@ function YUUGTRL:CreateWalkFlingButton(parent, text, default, callback, position
             grad.Rotation = 90
             grad.Parent = button
         end
-
         local currentColor = buttonColor
         local darkAmount = walkFlingEnabled and 70 or 50
         local darker2 = Color3.fromRGB(
@@ -815,12 +771,10 @@ function YUUGTRL:CreateWalkFlingButton(parent, text, default, callback, position
             math.max(currentColor.G * 255 - darkAmount, 0),
             math.max(currentColor.B * 255 - darkAmount, 0)
         )
-
         grad.Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, walkFlingEnabled and darker2 or currentColor),
             ColorSequenceKeypoint.new(1, darker2)
         })
-
         if not IsEmojiOrSymbol(button.Text) then
             if walkFlingEnabled then
                 button.TextColor3 = Color3.fromRGB(
@@ -833,9 +787,7 @@ function YUUGTRL:CreateWalkFlingButton(parent, text, default, callback, position
             end
         end
     end
-
     updateGradient()
-
     button.MouseEnter:Connect(function()
         local currentColor = buttonColor
         local hoverColor = Color3.fromRGB(
@@ -848,7 +800,6 @@ function YUUGTRL:CreateWalkFlingButton(parent, text, default, callback, position
             math.max(hoverColor.G * 255 - 50, 0),
             math.max(hoverColor.B * 255 - 50, 0)
         )
-
         local grad = button:FindFirstChildOfClass("UIGradient")
         if grad then
             grad.Color = ColorSequence.new({
@@ -856,16 +807,13 @@ function YUUGTRL:CreateWalkFlingButton(parent, text, default, callback, position
                 ColorSequenceKeypoint.new(1, hoverDarker)
             })
         end
-
         if not IsEmojiOrSymbol(button.Text) then
             button.TextColor3 = Color3.fromRGB(255, 255, 255)
         end
     end)
-
     button.MouseLeave:Connect(function()
         updateGradient()
     end)
-
     button.MouseButton1Click:Connect(function()
         walkFlingEnabled = not walkFlingEnabled
         if walkFlingEnabled then
@@ -878,7 +826,6 @@ function YUUGTRL:CreateWalkFlingButton(parent, text, default, callback, position
             pcall(callback, walkFlingEnabled)
         end
     end)
-
     player.CharacterAdded:Connect(function(newChar)
         character = newChar
         task.wait(0.5)
@@ -889,9 +836,7 @@ function YUUGTRL:CreateWalkFlingButton(parent, text, default, callback, position
             humanoid:ChangeState(11)
         end
     end)
-
     local walkFlingObject = {}
-
     function walkFlingObject:SetState(state)
         walkFlingEnabled = state
         if walkFlingEnabled then
@@ -902,11 +847,9 @@ function YUUGTRL:CreateWalkFlingButton(parent, text, default, callback, position
         updateGradient()
         if callback then pcall(callback, walkFlingEnabled) end
     end
-
     function walkFlingObject:GetState()
         return walkFlingEnabled
     end
-
     function walkFlingObject:Toggle()
         walkFlingEnabled = not walkFlingEnabled
         if walkFlingEnabled then
@@ -917,40 +860,141 @@ function YUUGTRL:CreateWalkFlingButton(parent, text, default, callback, position
         updateGradient()
         if callback then pcall(callback, walkFlingEnabled) end
     end
-
     function walkFlingObject:SetText(newText)
         button.Text = newText
     end
-
     function walkFlingObject:SetColors(newColors)
         if newColors.on then buttonColor = newColors.on end
         if newColors.off then buttonColor = newColors.off end
         updateGradient()
     end
-
     function walkFlingObject:Destroy()
         if walkFlingConnection then walkFlingConnection:Disconnect() end
         if jumpConnection then jumpConnection:Disconnect() end
         button:Destroy()
     end
-
     walkFlingObject.button = button
     table.insert(walkFlingInstances, walkFlingObject)
-
     return walkFlingObject
+end
+
+function YUUGTRL:CreateTextBox(parent, placeholder, defaultText, callback, position, size, customColors, labelText)
+    if not parent then return end
+    local textBoxScale = parent.Parent and parent.Parent.scale or scale
+    local frameSize = size or UDim2.new(1, -10, 0, 40)
+    local framePos = position or UDim2.new(0, 5, 0, 5)
+    local frame = self:CreateFrame(parent, frameSize, framePos, (customColors and customColors.background or currentTheme.InputColor), 8)
+    local border = Instance.new("Frame")
+    border.Size = UDim2.new(1, 0, 1, 0)
+    border.Position = UDim2.new(0, 0, 0, 0)
+    border.BackgroundColor3 = customColors and customColors.border or currentTheme.AccentColor
+    border.BackgroundTransparency = 0.8
+    border.BorderSizePixel = 0
+    border.Parent = frame
+    local borderCorner = Instance.new("UICorner")
+    borderCorner.CornerRadius = UDim.new(0, 8 * textBoxScale)
+    borderCorner.Parent = border
+    local textBox = Instance.new("TextBox")
+    textBox.Size = UDim2.new(1, -20, 1, 0)
+    textBox.Position = UDim2.new(0, 10, 0, 0)
+    textBox.BackgroundTransparency = 1
+    textBox.PlaceholderText = placeholder or ""
+    textBox.Text = defaultText or ""
+    textBox.TextColor3 = customColors and customColors.text or currentTheme.TextColor
+    textBox.PlaceholderColor3 = customColors and customColors.placeholder or Color3.fromRGB(150, 150, 150)
+    textBox.Font = Enum.Font.Gotham
+    textBox.TextSize = 14 * textBoxScale
+    textBox.TextXAlignment = Enum.TextXAlignment.Left
+    textBox.ClipsDescendants = true
+    textBox.Parent = frame
+    local label = nil
+    if labelText then
+        label = self:CreateLabel(frame, labelText, UDim2.new(0, 10, 1, -25), UDim2.new(1, -20, 0, 20), customColors and customColors.text or currentTheme.TextColor)
+        label.TextSize = 10 * textBoxScale
+        label.TextTransparency = 0.5
+        textBox.Position = UDim2.new(0, 10, 0, 5)
+        textBox.Size = UDim2.new(1, -20, 1, -25)
+    end
+    local isFocused = false
+    textBox.Focused:Connect(function()
+        isFocused = true
+        updateTextBoxStyle({
+            frame = frame,
+            border = border,
+            textBox = textBox,
+            label = label,
+            isFocused = true,
+            customColors = customColors
+        })
+    end)
+    textBox.FocusLost:Connect(function(enterPressed)
+        isFocused = false
+        updateTextBoxStyle({
+            frame = frame,
+            border = border,
+            textBox = textBox,
+            label = label,
+            isFocused = false,
+            customColors = customColors
+        })
+        if callback and textBox.Text ~= "" then
+            pcall(callback, textBox.Text, enterPressed)
+        end
+    end)
+    local textBoxObject = {
+        frame = frame,
+        border = border,
+        textBox = textBox,
+        label = label,
+        isFocused = isFocused,
+        customColors = customColors
+    }
+    function textBoxObject:SetText(text)
+        self.textBox.Text = text or ""
+        if callback and text ~= "" then
+            pcall(callback, self.textBox.Text, false)
+        end
+    end
+    function textBoxObject:GetText()
+        return self.textBox.Text
+    end
+    function textBoxObject:SetPlaceholder(text)
+        self.textBox.PlaceholderText = text
+    end
+    function textBoxObject:SetColors(colors)
+        self.customColors = colors
+        updateTextBoxStyle(self)
+    end
+    function textBoxObject:SetPosition(pos)
+        self.frame.Position = pos
+    end
+    function textBoxObject:SetSize(sz)
+        self.frame.Size = sz
+    end
+    function textBoxObject:Clear()
+        self.textBox.Text = ""
+    end
+    function textBoxObject:Destroy()
+        self.frame:Destroy()
+    end
+    updateTextBoxStyle(textBoxObject)
+    table.insert(textBoxes, textBoxObject)
+    return textBoxObject
+end
+
+function YUUGTRL:CreateLabeledTextBox(parent, placeholder, defaultText, callback, position, size, customColors, labelText)
+    return self:CreateTextBox(parent, placeholder, defaultText, callback, position, size, customColors, labelText or "Label")
 end
 
 function YUUGTRL:ShowNotification(title, message, duration, color)
     color = color or currentTheme.AccentColor or Color3.fromRGB(147, 69, 255)
     duration = duration or 3
-    
     local notifGui = Instance.new("ScreenGui")
     notifGui.Name = "YUUGTRL_Notification"
     notifGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     notifGui.DisplayOrder = 9999
     notifGui.ResetOnSpawn = false
     notifGui.Parent = player:WaitForChild("PlayerGui")
-    
     local frame = Instance.new("Frame")
     frame.Name = "MainFrame"
     frame.Size = UDim2.new(0, 350, 0, 80)
@@ -961,11 +1005,9 @@ function YUUGTRL:ShowNotification(title, message, duration, color)
     frame.BorderColor3 = color
     frame.ClipsDescendants = true
     frame.Parent = notifGui
-    
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 12)
     corner.Parent = frame
-    
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 35)),
@@ -973,7 +1015,6 @@ function YUUGTRL:ShowNotification(title, message, duration, color)
     })
     gradient.Rotation = 90
     gradient.Parent = frame
-    
     local iconFrame = Instance.new("Frame")
     iconFrame.Name = "IconFrame"
     iconFrame.Size = UDim2.new(0, 40, 0, 40)
@@ -982,11 +1023,9 @@ function YUUGTRL:ShowNotification(title, message, duration, color)
     iconFrame.BackgroundTransparency = 0.2
     iconFrame.BorderSizePixel = 0
     iconFrame.Parent = frame
-    
     local iconCorner = Instance.new("UICorner")
     iconCorner.CornerRadius = UDim.new(1, 0)
     iconCorner.Parent = iconFrame
-    
     local iconText = Instance.new("TextLabel")
     iconText.Name = "IconText"
     iconText.Size = UDim2.new(1, 0, 1, 0)
@@ -996,7 +1035,6 @@ function YUUGTRL:ShowNotification(title, message, duration, color)
     iconText.TextSize = 24
     iconText.Font = Enum.Font.GothamBold
     iconText.Parent = iconFrame
-    
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Name = "TitleLabel"
     titleLabel.Size = UDim2.new(1, -70, 0, 30)
@@ -1008,7 +1046,6 @@ function YUUGTRL:ShowNotification(title, message, duration, color)
     titleLabel.Font = Enum.Font.GothamBold
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
     titleLabel.Parent = frame
-    
     local messageLabel = Instance.new("TextLabel")
     messageLabel.Name = "MessageLabel"
     messageLabel.Size = UDim2.new(1, -70, 0, 30)
@@ -1021,7 +1058,6 @@ function YUUGTRL:ShowNotification(title, message, duration, color)
     messageLabel.TextXAlignment = Enum.TextXAlignment.Left
     messageLabel.TextWrapped = true
     messageLabel.Parent = frame
-    
     local lineContainer = Instance.new("Frame")
     lineContainer.Name = "LineContainer"
     lineContainer.Size = UDim2.new(1, -30, 0, 2)
@@ -1029,7 +1065,6 @@ function YUUGTRL:ShowNotification(title, message, duration, color)
     lineContainer.BackgroundTransparency = 1
     lineContainer.ClipsDescendants = true
     lineContainer.Parent = frame
-    
     local line = Instance.new("Frame")
     line.Name = "Line"
     line.Size = UDim2.new(1, 0, 1, 0)
@@ -1038,28 +1073,21 @@ function YUUGTRL:ShowNotification(title, message, duration, color)
     line.BackgroundTransparency = 0.5
     line.BorderSizePixel = 0
     line.Parent = lineContainer
-    
     local lineCorner = Instance.new("UICorner")
     lineCorner.CornerRadius = UDim.new(0, 2)
     lineCorner.Parent = line
-    
     local tweenIn = TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -175, 0, 20)})
     tweenIn:Play()
-    
     local tweenIcon = TweenService:Create(iconFrame, TweenInfo.new(0.3), {BackgroundTransparency = 0})
     tweenIcon:Play()
-    
     local lineTween = TweenService:Create(line, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
         Size = UDim2.new(0, 0, 1, 0),
         Position = UDim2.new(0.5, 0, 0, 0)
     })
     lineTween:Play()
-    
     task.wait(duration)
-    
     local tweenOut = TweenService:Create(frame, TweenInfo.new(0.3), {Position = UDim2.new(0.5, -175, 0, -100), BackgroundTransparency = 1})
     tweenOut:Play()
-    
     for _, child in pairs(frame:GetChildren()) do
         if child:IsA("TextLabel") then
             TweenService:Create(child, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
@@ -1067,11 +1095,9 @@ function YUUGTRL:ShowNotification(title, message, duration, color)
             TweenService:Create(child, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
         end
     end
-    
     TweenService:Create(iconFrame, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
     TweenService:Create(iconText, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
     TweenService:Create(line, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
-    
     tweenOut.Completed:Connect(function()
         notifGui:Destroy()
     end)
@@ -1079,27 +1105,23 @@ end
 
 function YUUGTRL:CreateWindow(title, size, position, options)
     options = options or {}
-
     local screenSize = workspace.CurrentCamera.ViewportSize
     local scale = 1
     if isMobile then
         scale = math.min(screenSize.X / 600, 0.9)
     end
-
     local windowSize = size
     if size then
         windowSize = UDim2.new(size.X.Scale, size.X.Offset * scale, size.Y.Scale, size.Y.Offset * scale)
     else
         windowSize = UDim2.new(0, 350 * scale, 0, 450 * scale)
     end
-
     local windowPos = position
     if not windowPos then
         windowPos = UDim2.new(0.5, -(175 * scale), 0.5, -(225 * scale))
     elseif position then
         windowPos = UDim2.new(position.X.Scale, position.X.Offset * scale, position.Y.Scale, position.Y.Offset * scale)
     end
-
     local ScreenGui = Create({
         type = "ScreenGui",
         Name = "YUUGTRL_" .. (title:gsub("%s+", "") or "Window"),
@@ -1108,7 +1130,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         ResetOnSpawn = false,
         Parent = player:WaitForChild("PlayerGui")
     })
-
     local Main = Create({
         type = "Frame",
         Size = windowSize,
@@ -1118,9 +1139,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         Parent = ScreenGui,
         ClipsDescendants = true
     })
-
     Create({type = "UICorner",CornerRadius = UDim.new(0, 12 * scale),Parent = Main})
-
     local Header = Create({
         type = "Frame",
         Size = UDim2.new(1, 0, 0, 40 * scale),
@@ -1128,37 +1147,29 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         BorderSizePixel = 0,
         Parent = Main
     })
-
     Create({type = "UICorner",CornerRadius = UDim.new(0, 12 * scale),Parent = Header})
-
     local Title = self:CreateLabel(Header, title, UDim2.new(0, 15 * scale, 0, 0), UDim2.new(1, -100 * scale, 1, 0), options.TextColor or currentTheme.TextColor)
     Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.TextSize = 18 * scale
     if options.titleKey then
         self:RegisterTranslatable(Title, options.titleKey)
     end
-
     local SettingsBtn
     local CloseBtn
     local HideBtn
-
     if options.ShowSettings ~= false then
         SettingsBtn = self:CreateButton(Header, "⚙", nil, options.AccentColor or currentTheme.AccentColor, UDim2.new(1, -105 * scale, 0, 5 * scale), UDim2.new(0, 30 * scale, 0, 30 * scale))
     end
-
     if options.ShowHide ~= false then
         HideBtn = self:CreateButton(Header, "➖", nil, options.HideColor or Color3.fromRGB(100, 150, 255), UDim2.new(1, -70 * scale, 0, 5 * scale), UDim2.new(0, 30 * scale, 0, 30 * scale))
     end
-
     if options.ShowClose ~= false then
         CloseBtn = self:CreateButton(Header, "X", nil, options.CloseColor or Color3.fromRGB(255, 100, 100), UDim2.new(1, -35 * scale, 0, 5 * scale), UDim2.new(0, 30 * scale, 0, 30 * scale))
         CloseBtn.MouseButton1Click:Connect(function() 
             ScreenGui:Destroy() 
         end)
     end
-
     local dragging, dragInput, dragStart, startPos
-
     Header.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
@@ -1171,25 +1182,21 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             end)
         end
     end)
-
     Header.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             dragInput = input
         end
     end)
-
     UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             local delta = input.Position - dragStart
             Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
-
     local isMinimized = false
     local originalSize = windowSize
     local mainContainer = nil
     local hideBtnOriginalColor = options.HideColor or Color3.fromRGB(100, 150, 255)
-
     local window = {
         ScreenGui = ScreenGui,
         Main = Main,
@@ -1206,15 +1213,15 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         minimizedSize = UDim2.new(windowSize.X.Scale, windowSize.X.Offset, 0, 40 * scale),
         mainContainer = nil
     }
-
     function window:SetMainColor(color)
         self.Main.BackgroundColor3 = color
+        if self.mainContainer then
+            self.mainContainer.BackgroundColor3 = color
+        end
     end
-
     function window:SetHeaderColor(color)
         self.Header.BackgroundColor3 = color
     end
-
     function window:SetTextColor(color)
         self.Title.TextColor3 = color
         for _, element in pairs(self.elements) do
@@ -1223,7 +1230,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             end
         end
     end
-
     function window:SetCornerRadius(radius)
         for _, v in pairs(self.Main:GetChildren()) do
             if v:IsA("UICorner") then
@@ -1236,7 +1242,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             end
         end
     end
-
     function window:Minimize()
         if self.isMinimized then return end
         self.isMinimized = true
@@ -1264,7 +1269,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             self.hideCallback(true)
         end
     end
-
     function window:Maximize()
         if not self.isMinimized then return end
         self.isMinimized = false
@@ -1296,7 +1300,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             self.hideCallback(false)
         end
     end
-
     function window:ToggleMinimize()
         if self.isMinimized then
             self:Maximize()
@@ -1304,13 +1307,11 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             self:Minimize()
         end
     end
-
     if HideBtn then
         HideBtn.MouseButton1Click:Connect(function()
             window:ToggleMinimize()
         end)
     end
-
     function window:CreateFrame(size, position, color, radius)
         if not self.mainContainer then
             self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
@@ -1323,7 +1324,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         local framePos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
         return YUUGTRL:CreateFrame(self.mainContainer, frameSize, framePos, color, radius and radius * self.scale)
     end
-
     function window:CreateScrollingFrame(size, position, color, radius)
         if not self.mainContainer then
             self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
@@ -1336,7 +1336,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         local framePos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
         return YUUGTRL:CreateScrollingFrame(self.mainContainer, frameSize, framePos, color, radius and radius * self.scale)
     end
-
     function window:CreateLabel(text, position, size, color, translationKey)
         if not self.mainContainer then
             self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
@@ -1355,7 +1354,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         table.insert(self.elements, {type = "label", obj = label})
         return label
     end
-
     function window:CreateButton(text, callback, color, position, size, translationKey)
         if not self.mainContainer then
             self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
@@ -1374,7 +1372,6 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         table.insert(self.elements, {type = "button", obj = btn})
         return btn
     end
-
     function window:CreateSlider(text, min, max, default, callback, position, size)
         if not self.mainContainer then
             self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
@@ -1387,31 +1384,37 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         local sliderSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
         return YUUGTRL:CreateSlider(self.mainContainer, text, min, max, default, callback, sliderPos, sliderSize)
     end
-
+    function window:CreateTextBox(placeholder, defaultText, callback, position, size, customColors, labelText)
+        if not self.mainContainer then
+            self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
+                UDim2.new(1, 0, 1, -40 * self.scale), 
+                UDim2.new(0, 0, 0, 40 * self.scale),
+                self.options.MainColor or currentTheme.MainColor, 0)
+            self.mainContainer.BackgroundTransparency = 1
+        end
+        local boxPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
+        local boxSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
+        return YUUGTRL:CreateTextBox(self.mainContainer, placeholder, defaultText, callback, boxPos, boxSize, customColors, labelText)
+    end
     function window:SetSettingsCallback(callback)
         if SettingsBtn then
             SettingsBtn.MouseButton1Click:Connect(callback)
         end
     end
-
     function window:SetHideCallback(callback)
         self.hideCallback = callback
     end
-
     function window:SetCloseCallback(callback)
         if CloseBtn then
             CloseBtn.MouseButton1Click:Connect(callback)
         end
     end
-
     function window:Destroy()
         ScreenGui:Destroy()
     end
-
     function window:UpdateLanguage()
         YUUGTRL:UpdateAllTexts()
     end
-
     function window:CreateButtonToggle(text, default, callback, position, size, colors, translationKey)
         if not self.mainContainer then
             self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
@@ -1424,25 +1427,19 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         if btnPos then
             btnPos = UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale)
         end
-
         local btnSize = size
         if btnSize then
             btnSize = UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale)
         end
-
         local toggle = YUUGTRL:CreateButtonToggle(self.mainContainer, text, default, callback, btnPos, btnSize, colors)
-
         if translationKey and toggle and toggle.button then
             YUUGTRL:RegisterTranslatable(toggle.button, translationKey)
         end
-
         if toggle and toggle.button then
             table.insert(self.elements, {type = "button-toggle", obj = toggle})
         end
-
         return toggle
     end
-
     function window:CreateAntiSitButton(text, default, callback, position, size, colors, translationKey)
         if not self.mainContainer then
             self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
@@ -1455,25 +1452,19 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         if btnPos then
             btnPos = UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale)
         end
-
         local btnSize = size
         if btnSize then
             btnSize = UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale)
         end
-
         local antiSit = YUUGTRL:CreateAntiSitButton(self.mainContainer, text, default, callback, btnPos, btnSize, colors)
-
         if translationKey and antiSit and antiSit.button then
             YUUGTRL:RegisterTranslatable(antiSit.button, translationKey)
         end
-
         if antiSit and antiSit.button then
             table.insert(self.elements, {type = "anti-sit", obj = antiSit})
         end
-
         return antiSit
     end
-
     function window:CreateWalkFlingButton(text, default, callback, position, size, colors, translationKey)
         if not self.mainContainer then
             self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
@@ -1486,29 +1477,22 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         if btnPos then
             btnPos = UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale)
         end
-
         local btnSize = size
         if btnSize then
             btnSize = UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale)
         end
-
         local walkFling = YUUGTRL:CreateWalkFlingButton(self.mainContainer, text, default, callback, btnPos, btnSize, colors)
-
         if translationKey and walkFling and walkFling.button then
             YUUGTRL:RegisterTranslatable(walkFling.button, translationKey)
         end
-
         if walkFling and walkFling.button then
             table.insert(self.elements, {type = "walk-fling", obj = walkFling})
         end
-
         return walkFling
     end
-
     function window:ShowNotification(title, message, duration, color)
         YUUGTRL:ShowNotification(title, message, duration, color)
     end
-
     return window
 end
 
@@ -1522,9 +1506,7 @@ function YUUGTRL:CreateFrame(parent, size, position, color, radius)
         BorderSizePixel = 0,
         Parent = parent
     })
-
     Create({type = "UICorner",CornerRadius = UDim.new(0, radius or 12 * scale),Parent = frame})
-
     return frame
 end
 
@@ -1541,13 +1523,11 @@ function YUUGTRL:CreateScrollingFrame(parent, size, position, color, radius)
     frame.CanvasSize = UDim2.new(0, 0, 0, 0)
     frame.AutomaticCanvasSize = Enum.AutomaticSize.Y
     frame.Parent = parent
-
     if radius then
         local corner = Instance.new("UICorner")
         corner.CornerRadius = UDim.new(0, radius or 12 * scale)
         corner.Parent = frame
     end
-
     return frame
 end
 
@@ -1570,30 +1550,22 @@ end
 function YUUGTRL:CreateSlider(parent, text, min, max, default, callback, position, size)
     if not parent then return end
     local frame = self:CreateFrame(parent, size or UDim2.new(0, 200 * scale, 0, 50 * scale), position, currentTheme.FrameColor, 8 * scale)
-
     self:CreateLabel(frame, text or "", UDim2.new(0, 10 * scale, 0, 5 * scale), UDim2.new(1, -60 * scale, 0, 20 * scale))
-
     local valueLabel = self:CreateLabel(frame, tostring(default or 0), UDim2.new(1, -50 * scale, 0, 5 * scale), UDim2.new(0, 40 * scale, 0, 20 * scale))
     valueLabel.TextXAlignment = Enum.TextXAlignment.Right
-
     local slider = self:CreateFrame(frame, UDim2.new(1, -20 * scale, 0, 8 * scale), UDim2.new(0, 10 * scale, 0, 30 * scale), Color3.fromRGB(60, 60, 70), 4 * scale)
-
     local fill = self:CreateFrame(slider, UDim2.new((default or 0) / max, 0, 1, 0), UDim2.new(0, 0, 0, 0), currentTheme.AccentColor, 4 * scale)
-
     local dragging = false
-
     slider.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
         end
     end)
-
     UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = false
         end
     end)
-
     UserInputService.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local pos = input.Position.X - slider.AbsolutePosition.X
@@ -1605,7 +1577,6 @@ function YUUGTRL:CreateSlider(parent, text, min, max, default, callback, positio
             if callback then pcall(callback, value) end
         end
     end)
-
     return slider
 end
 
