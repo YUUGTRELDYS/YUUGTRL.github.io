@@ -1211,12 +1211,18 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         hideCallback = nil,
         isMinimized = false,
         minimizedSize = UDim2.new(windowSize.X.Scale, windowSize.X.Offset, 0, 40 * scale),
-        mainContainer = nil
+        mainContainer = nil,
+        allContentFrames = {}
     }
     function window:SetMainColor(color)
         self.Main.BackgroundColor3 = color
         if self.mainContainer then
             self.mainContainer.BackgroundColor3 = color
+        end
+        for _, frame in pairs(self.allContentFrames) do
+            if frame then
+                frame.BackgroundColor3 = color
+            end
         end
     end
     function window:SetHeaderColor(color)
@@ -1248,6 +1254,11 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         if self.mainContainer then
             self.mainContainer.Visible = false
         end
+        for _, frame in pairs(self.allContentFrames) do
+            if frame then
+                frame.Visible = false
+            end
+        end
         self.Main:TweenSize(self.minimizedSize, "Out", "Quad", 0.3, true)
         if self.HideBtn then
             local grad = self.HideBtn:FindFirstChildOfClass("UIGradient")
@@ -1274,6 +1285,11 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         self.isMinimized = false
         if self.mainContainer then
             self.mainContainer.Visible = true
+        end
+        for _, frame in pairs(self.allContentFrames) do
+            if frame then
+                frame.Visible = true
+            end
         end
         self.Main:TweenSize(originalSize, "Out", "Quad", 0.3, true)
         if self.HideBtn then
@@ -1319,10 +1335,13 @@ function YUUGTRL:CreateWindow(title, size, position, options)
                 UDim2.new(0, 0, 0, 40 * self.scale),
                 self.options.MainColor or currentTheme.MainColor, 0)
             self.mainContainer.BackgroundTransparency = 1
+            table.insert(self.allContentFrames, self.mainContainer)
         end
         local frameSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
         local framePos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
-        return YUUGTRL:CreateFrame(self.mainContainer, frameSize, framePos, color, radius and radius * self.scale)
+        local newFrame = YUUGTRL:CreateFrame(self.mainContainer, frameSize, framePos, color, radius and radius * self.scale)
+        table.insert(self.allContentFrames, newFrame)
+        return newFrame
     end
     function window:CreateScrollingFrame(size, position, color, radius)
         if not self.mainContainer then
@@ -1331,10 +1350,13 @@ function YUUGTRL:CreateWindow(title, size, position, options)
                 UDim2.new(0, 0, 0, 40 * self.scale),
                 self.options.MainColor or currentTheme.MainColor, 0)
             self.mainContainer.BackgroundTransparency = 1
+            table.insert(self.allContentFrames, self.mainContainer)
         end
         local frameSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
         local framePos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
-        return YUUGTRL:CreateScrollingFrame(self.mainContainer, frameSize, framePos, color, radius and radius * self.scale)
+        local newFrame = YUUGTRL:CreateScrollingFrame(self.mainContainer, frameSize, framePos, color, radius and radius * self.scale)
+        table.insert(self.allContentFrames, newFrame)
+        return newFrame
     end
     function window:CreateLabel(text, position, size, color, translationKey)
         if not self.mainContainer then
@@ -1343,6 +1365,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
                 UDim2.new(0, 0, 0, 40 * self.scale),
                 self.options.MainColor or currentTheme.MainColor, 0)
             self.mainContainer.BackgroundTransparency = 1
+            table.insert(self.allContentFrames, self.mainContainer)
         end
         local labelPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
         local labelSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
@@ -1361,6 +1384,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
                 UDim2.new(0, 0, 0, 40 * self.scale),
                 self.options.MainColor or currentTheme.MainColor, 0)
             self.mainContainer.BackgroundTransparency = 1
+            table.insert(self.allContentFrames, self.mainContainer)
         end
         local btnPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
         local btnSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
@@ -1379,6 +1403,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
                 UDim2.new(0, 0, 0, 40 * self.scale),
                 self.options.MainColor or currentTheme.MainColor, 0)
             self.mainContainer.BackgroundTransparency = 1
+            table.insert(self.allContentFrames, self.mainContainer)
         end
         local sliderPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
         local sliderSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
@@ -1391,6 +1416,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
                 UDim2.new(0, 0, 0, 40 * self.scale),
                 self.options.MainColor or currentTheme.MainColor, 0)
             self.mainContainer.BackgroundTransparency = 1
+            table.insert(self.allContentFrames, self.mainContainer)
         end
         local boxPos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
         local boxSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
@@ -1422,6 +1448,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
                 UDim2.new(0, 0, 0, 40 * self.scale),
                 self.options.MainColor or currentTheme.MainColor, 0)
             self.mainContainer.BackgroundTransparency = 1
+            table.insert(self.allContentFrames, self.mainContainer)
         end
         local btnPos = position
         if btnPos then
@@ -1447,6 +1474,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
                 UDim2.new(0, 0, 0, 40 * self.scale),
                 self.options.MainColor or currentTheme.MainColor, 0)
             self.mainContainer.BackgroundTransparency = 1
+            table.insert(self.allContentFrames, self.mainContainer)
         end
         local btnPos = position
         if btnPos then
@@ -1472,6 +1500,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
                 UDim2.new(0, 0, 0, 40 * self.scale),
                 self.options.MainColor or currentTheme.MainColor, 0)
             self.mainContainer.BackgroundTransparency = 1
+            table.insert(self.allContentFrames, self.mainContainer)
         end
         local btnPos = position
         if btnPos then
