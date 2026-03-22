@@ -1,0 +1,325 @@
+local YUUGTRL = loadstring(game:HttpGet("https://raw.githubusercontent.com/YUUGTRELDYS/YUUGTRL.github.io/refs/heads/main/lib.lua"))()
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local MarketplaceService = game:GetService("MarketplaceService")
+local LocalPlayer = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local isMobile = UserInputService.TouchEnabled
+
+print("Game Place ID: " .. game.PlaceId)
+print("Game Job ID: " .. game.JobId)
+
+local isLobby = (game.PlaceId == 14161770735)
+
+local speedMultiplier = 16
+local jumpPowerMultiplier = 50
+local originalSpeed = 16
+local originalJumpPower = 50
+local flyEnabled = false
+local flyConnection = nil
+local noclipEnabled = false
+local noclipConnection = nil
+local infinityJumpEnabled = false
+local infinityJumpConnection = nil
+local bodyVelocity = nil
+local bodyGyro = nil
+
+local PURPLE = Color3.fromRGB(138, 43, 226)
+local DARK_PURPLE = Color3.fromRGB(88, 28, 176)
+local LIGHT_PURPLE = Color3.fromRGB(178, 98, 255)
+
+local function enableFly()
+    if flyEnabled then
+        disableFly()
+    end
+    flyEnabled = true
+    local character = LocalPlayer.Character
+    if not character then return end
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then return end
+    
+    bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.MaxForce = Vector3.new(1/0, 1/0, 1/0)
+    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+    bodyVelocity.Parent = rootPart
+    
+    bodyGyro = Instance.new("BodyGyro")
+    bodyGyro.MaxTorque = Vector3.new(1/0, 1/0, 1/0)
+    bodyGyro.P = 1e5
+    bodyGyro.CFrame = rootPart.CFrame
+    bodyGyro.Parent = rootPart
+    
+    flyConnection = RunService.RenderStepped:Connect(function()
+        if not flyEnabled or not LocalPlayer.Character then 
+            disableFly()
+            return 
+        end
+        local rootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if not rootPart then return end
+        local moveDirection = Vector3.new(0, 0, 0)
+        local cameraCFrame = camera.CFrame
+        local flySpeed = speedMultiplier * 2
+        
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+            moveDirection = moveDirection + cameraCFrame.LookVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+            moveDirection = moveDirection - cameraCFrame.LookVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+            moveDirection = moveDirection - cameraCFrame.RightVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+            moveDirection = moveDirection + cameraCFrame.RightVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            moveDirection = moveDirection + Vector3.new(0, 1, 0)
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+            moveDirection = moveDirection - Vector3.new(0, 1, 0)
+        end
+        
+        if moveDirection.Magnitude > 0 then
+            moveDirection = moveDirection.Unit * flySpeed
+        end
+        bodyVelocity.Velocity = moveDirection
+        bodyGyro.CFrame = cameraCFrame
+    end)
+    
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid.PlatformStand = true
+    end
+    YUUGTRL:ShowNotification("FLY", "Fly mode enabled", 2, PURPLE)
+end
+
+local function disableFly()
+    flyEnabled = false
+    if flyConnection then flyConnection:Disconnect() flyConnection = nil end
+    if bodyVelocity then bodyVelocity:Destroy() bodyVelocity = nil end
+    if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
+    local character = LocalPlayer.Character
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.PlatformStand = false
+        end
+    end
+end
+
+local function enableNoclip()
+    noclipEnabled = true
+    noclipConnection = RunService.Stepped:Connect(function()
+        if not noclipEnabled then return end
+        local character = LocalPlayer.Character
+        if not character then return end
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end)
+    YUUGTRL:ShowNotification("NOCLIP", "Noclip enabled", 2, PURPLE)
+end
+
+local function disableNoclip()
+    noclipEnabled = false
+    if noclipConnection then noclipConnection:Disconnect() noclipConnection = nil end
+    local character = LocalPlayer.Character
+    if character then
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = true
+            end
+        end
+    end
+end
+
+local function enableInfinityJump()
+    infinityJumpEnabled = true
+    infinityJumpConnection = UserInputService.JumpRequest:Connect(function()
+        if infinityJumpEnabled and LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end
+    end)
+    YUUGTRL:ShowNotification("INFINITY JUMP", "Infinity jump enabled", 2, PURPLE)
+end
+
+local function disableInfinityJump()
+    infinityJumpEnabled = false
+    if infinityJumpConnection then infinityJumpConnection:Disconnect() infinityJumpConnection = nil end
+end
+
+local Hub = YUUGTRL:CreateWindow(
+    "Play Or Die",
+    isMobile and UDim2.new(0, 280, 0, 270) or UDim2.new(0, 280, 0, 270),
+    UDim2.new(0.5, isMobile and -140 or -140, 0.5, isMobile and -135 or -135),
+    {
+        ShowSettings = false,
+        ShowClose = true,
+        ShowHide = true,
+        MainColor = Color3.fromRGB(20, 15, 30),
+        HeaderColor = Color3.fromRGB(30, 25, 40),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        AccentColor = PURPLE,
+        ButtonColor = PURPLE,
+        FrameColor = Color3.fromRGB(25, 20, 35)
+    }
+)
+
+local MainContainer = YUUGTRL:CreateScrollingFrame(
+    Hub.Main,
+    UDim2.new(1, -20, 1, -50),
+    UDim2.new(0, 10, 0, 45),
+    Color3.fromRGB(25, 20, 35),
+    12
+)
+
+local yPos = 5
+
+originalSpeed = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") and LocalPlayer.Character.Humanoid.WalkSpeed or 16
+speedMultiplier = originalSpeed
+originalJumpPower = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") and LocalPlayer.Character.Humanoid.JumpPower or 50
+jumpPowerMultiplier = originalJumpPower
+
+local SpeedSlider = YUUGTRL:CreateSlider(
+    MainContainer,
+    "SPEED",
+    16, 100, speedMultiplier,
+    function(value)
+        speedMultiplier = value
+        if LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+            if humanoid then
+                humanoid.WalkSpeed = value
+            end
+        end
+    end,
+    UDim2.new(0, 5, 0, yPos),
+    UDim2.new(1, -10, 0, 60)
+)
+yPos = yPos + 70
+
+local JumpSlider = YUUGTRL:CreateSlider(
+    MainContainer,
+    "JUMP POWER",
+    20, 200, jumpPowerMultiplier,
+    function(value)
+        jumpPowerMultiplier = value
+        if LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+            if humanoid then
+                humanoid.JumpPower = value
+            end
+        end
+    end,
+    UDim2.new(0, 5, 0, yPos),
+    UDim2.new(1, -10, 0, 60)
+)
+yPos = yPos + 70
+
+local flyToggle = YUUGTRL:CreateButtonToggle(
+    MainContainer,
+    "FLY",
+    false,
+    function(state)
+        if state then enableFly() else disableFly() end
+    end,
+    UDim2.new(0, 5, 0, yPos),
+    UDim2.new(1, -10, 0, 35),
+    {
+        on = PURPLE,
+        off = DARK_PURPLE
+    }
+)
+yPos = yPos + 40
+
+local noclipToggle = YUUGTRL:CreateButtonToggle(
+    MainContainer,
+    "NOCLIP",
+    false,
+    function(state)
+        if state then enableNoclip() else disableNoclip() end
+    end,
+    UDim2.new(0, 5, 0, yPos),
+    UDim2.new(1, -10, 0, 35),
+    {
+        on = PURPLE,
+        off = DARK_PURPLE
+    }
+)
+yPos = yPos + 40
+
+local infinityJumpToggle = YUUGTRL:CreateButtonToggle(
+    MainContainer,
+    "INFINITY JUMP",
+    false,
+    function(state)
+        if state then enableInfinityJump() else disableInfinityJump() end
+    end,
+    UDim2.new(0, 5, 0, yPos),
+    UDim2.new(1, -10, 0, 35),
+    {
+        on = PURPLE,
+        off = DARK_PURPLE
+    }
+)
+yPos = yPos + 40
+
+if isLobby then
+    local moneyButton = YUUGTRL:CreateButton(
+        MainContainer,
+        "Get Some Money",
+        function()
+            local products = {1694520586, 1694520645, 1694520705, 1694520759}
+            for _, productId in ipairs(products) do
+                MarketplaceService:SignalPromptProductPurchaseFinished(LocalPlayer.UserId, productId, true)
+            end
+        end,
+        PURPLE,
+        UDim2.new(0, 5, 0, yPos),
+        UDim2.new(1, -10, 0, 40)
+    )
+    yPos = yPos + 50
+end
+
+MainContainer.CanvasSize = UDim2.new(0, 0, 0, yPos + 20)
+
+RunService.Heartbeat:Connect(function()
+    if LocalPlayer.Character then
+        local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+        if humanoid then
+            if humanoid.WalkSpeed ~= speedMultiplier then
+                humanoid.WalkSpeed = speedMultiplier
+            end
+            if humanoid.JumpPower ~= jumpPowerMultiplier then
+                humanoid.JumpPower = jumpPowerMultiplier
+            end
+        end
+    end
+end)
+
+Hub.CloseBtn.MouseButton1Click:Connect(function()
+    disableFly()
+    disableNoclip()
+    disableInfinityJump()
+    if LocalPlayer.Character then
+        local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = originalSpeed
+            humanoid.JumpPower = originalJumpPower
+        end
+    end
+    Hub.ScreenGui:Destroy()
+end)
+
+for i, child in pairs(Hub.Header:GetChildren()) do
+    if child:IsA("TextLabel") then
+        child.TextColor3 = Color3.fromRGB(255, 255, 255)
+    end
+end
