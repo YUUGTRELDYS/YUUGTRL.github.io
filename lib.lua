@@ -131,6 +131,156 @@ local themes = {
 local currentTheme = themes.dark
 local textBoxes = {}
 
+local notificationQueue = {}
+local activeNotification = nil
+local notificationCooldown = false
+
+local function processNotificationQueue()
+    if notificationCooldown then return end
+    if activeNotification then return end
+    if #notificationQueue == 0 then return end
+    
+    local notifData = table.remove(notificationQueue, 1)
+    activeNotification = notifData
+    
+    local notifGui = Instance.new("ScreenGui")
+    notifGui.Name = "YUUGTRL_Notification"
+    notifGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    notifGui.DisplayOrder = 9999
+    notifGui.ResetOnSpawn = false
+    notifGui.Parent = player:WaitForChild("PlayerGui")
+    
+    local frame = Instance.new("Frame")
+    frame.Name = "MainFrame"
+    frame.Size = UDim2.new(0, 350, 0, 80)
+    frame.Position = UDim2.new(0.5, -175, 0, -100)
+    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    frame.BackgroundTransparency = 0.1
+    frame.BorderSizePixel = 2
+    frame.BorderColor3 = notifData.color or currentTheme.AccentColor
+    frame.ClipsDescendants = true
+    frame.Parent = notifGui
+    
+    local frameCorner = Instance.new("UICorner")
+    frameCorner.CornerRadius = UDim.new(0, 12)
+    frameCorner.Parent = frame
+    
+    local frameGradient = Instance.new("UIGradient")
+    frameGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 35)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 25))
+    })
+    frameGradient.Rotation = 90
+    frameGradient.Parent = frame
+    
+    local iconFrame = Instance.new("Frame")
+    iconFrame.Name = "IconFrame"
+    iconFrame.Size = UDim2.new(0, 40, 0, 40)
+    iconFrame.Position = UDim2.new(0, 15, 0.5, -20)
+    iconFrame.BackgroundColor3 = notifData.color or currentTheme.AccentColor
+    iconFrame.BackgroundTransparency = 0.2
+    iconFrame.BorderSizePixel = 0
+    iconFrame.Parent = frame
+    
+    local iconCorner = Instance.new("UICorner")
+    iconCorner.CornerRadius = UDim.new(1, 0)
+    iconCorner.Parent = iconFrame
+    
+    local iconText = Instance.new("TextLabel")
+    iconText.Name = "IconText"
+    iconText.Size = UDim2.new(1, 0, 1, 0)
+    iconText.BackgroundTransparency = 1
+    iconText.Text = notifData.icon or "!"
+    iconText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    iconText.TextSize = 24
+    iconText.Font = Enum.Font.GothamBold
+    iconText.Parent = iconFrame
+    
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Name = "TitleLabel"
+    titleLabel.Size = UDim2.new(1, -70, 0, 30)
+    titleLabel.Position = UDim2.new(0, 65, 0, 10)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = notifData.title
+    titleLabel.TextColor3 = notifData.color or currentTheme.AccentColor
+    titleLabel.TextSize = 18
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.Parent = frame
+    
+    local messageLabel = Instance.new("TextLabel")
+    messageLabel.Name = "MessageLabel"
+    messageLabel.Size = UDim2.new(1, -70, 0, 30)
+    messageLabel.Position = UDim2.new(0, 65, 0, 40)
+    messageLabel.BackgroundTransparency = 1
+    messageLabel.Text = notifData.message
+    messageLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    messageLabel.TextSize = 14
+    messageLabel.Font = Enum.Font.Gotham
+    messageLabel.TextXAlignment = Enum.TextXAlignment.Left
+    messageLabel.TextWrapped = true
+    messageLabel.Parent = frame
+    
+    local lineContainer = Instance.new("Frame")
+    lineContainer.Name = "LineContainer"
+    lineContainer.Size = UDim2.new(1, -30, 0, 2)
+    lineContainer.Position = UDim2.new(0, 15, 1, -5)
+    lineContainer.BackgroundTransparency = 1
+    lineContainer.ClipsDescendants = true
+    lineContainer.Parent = frame
+    
+    local line = Instance.new("Frame")
+    line.Name = "Line"
+    line.Size = UDim2.new(1, 0, 1, 0)
+    line.Position = UDim2.new(0, 0, 0, 0)
+    line.BackgroundColor3 = notifData.color or currentTheme.AccentColor
+    line.BackgroundTransparency = 0.5
+    line.BorderSizePixel = 0
+    line.Parent = lineContainer
+    
+    local lineCorner = Instance.new("UICorner")
+    lineCorner.CornerRadius = UDim.new(0, 2)
+    lineCorner.Parent = line
+    
+    local tweenIn = TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -175, 0, 20)})
+    tweenIn:Play()
+    
+    local tweenIcon = TweenService:Create(iconFrame, TweenInfo.new(0.3), {BackgroundTransparency = 0})
+    tweenIcon:Play()
+    
+    local lineTween = TweenService:Create(line, TweenInfo.new(notifData.duration or 3, Enum.EasingStyle.Linear), {
+        Size = UDim2.new(0, 0, 1, 0),
+        Position = UDim2.new(0.5, 0, 0, 0)
+    })
+    lineTween:Play()
+    
+    task.wait(notifData.duration or 3)
+    
+    local tweenOut = TweenService:Create(frame, TweenInfo.new(0.3), {Position = UDim2.new(0.5, -175, 0, -100), BackgroundTransparency = 1})
+    tweenOut:Play()
+    
+    for _, child in pairs(frame:GetChildren()) do
+        if child:IsA("TextLabel") then
+            TweenService:Create(child, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+        elseif child:IsA("Frame") and child ~= iconFrame and child ~= lineContainer then
+            TweenService:Create(child, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+        end
+    end
+    
+    TweenService:Create(iconFrame, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(iconText, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+    TweenService:Create(line, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+    
+    tweenOut.Completed:Connect(function()
+        notifGui:Destroy()
+        activeNotification = nil
+        notificationCooldown = true
+        task.wait(0.1)
+        notificationCooldown = false
+        processNotificationQueue()
+    end)
+end
+
 local function updateTextBoxStyle(textBoxObj)
     if not textBoxObj or not textBoxObj.frame then return end
     local theme = YUUGTRL:GetTheme()
@@ -905,7 +1055,9 @@ function YUUGTRL:CreateTextBox(parent, placeholder, defaultText, callback, posit
     textBox.Font = Enum.Font.Gotham
     textBox.TextSize = 14 * textBoxScale
     textBox.TextXAlignment = Enum.TextXAlignment.Left
-    textBox.ClipsDescendants = true
+    textBox.TextTruncate = Enum.TextTruncate.None
+    textBox.TextWrapped = true
+    textBox.ClipsDescendants = false
     textBox.Parent = frame
     local label = nil
     if labelText then
@@ -986,121 +1138,100 @@ function YUUGTRL:CreateLabeledTextBox(parent, placeholder, defaultText, callback
     return self:CreateTextBox(parent, placeholder, defaultText, callback, position, size, customColors, labelText or "Label")
 end
 
-function YUUGTRL:ShowNotification(title, message, duration, color)
-    color = color or currentTheme.AccentColor or Color3.fromRGB(147, 69, 255)
-    duration = duration or 3
-    local notifGui = Instance.new("ScreenGui")
-    notifGui.Name = "YUUGTRL_Notification"
-    notifGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    notifGui.DisplayOrder = 9999
-    notifGui.ResetOnSpawn = false
-    notifGui.Parent = player:WaitForChild("PlayerGui")
-    local frame = Instance.new("Frame")
-    frame.Name = "MainFrame"
-    frame.Size = UDim2.new(0, 350, 0, 80)
-    frame.Position = UDim2.new(0.5, -175, 0, -100)
-    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-    frame.BackgroundTransparency = 0.1
-    frame.BorderSizePixel = 2
-    frame.BorderColor3 = color
-    frame.ClipsDescendants = true
-    frame.Parent = notifGui
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 12)
-    corner.Parent = frame
-    local gradient = Instance.new("UIGradient")
-    gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 35)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 25))
+function YUUGTRL:ShowNotification(title, message, duration, color, icon)
+    local notifData = {
+        title = title or "Уведомление",
+        message = message or "",
+        duration = duration or 3,
+        color = color,
+        icon = icon or "!"
+    }
+    table.insert(notificationQueue, notifData)
+    processNotificationQueue()
+end
+
+function YUUGTRL:CreateFrame(parent, size, position, color, radius)
+    if not parent then return end
+    local frame = Create({
+        type = "Frame",
+        Size = size or UDim2.new(0, 100 * scale, 0, 100 * scale),
+        Position = position or UDim2.new(0, 0, 0, 0),
+        BackgroundColor3 = color or currentTheme.FrameColor,
+        BorderSizePixel = 0,
+        Parent = parent
     })
-    gradient.Rotation = 90
-    gradient.Parent = frame
-    local iconFrame = Instance.new("Frame")
-    iconFrame.Name = "IconFrame"
-    iconFrame.Size = UDim2.new(0, 40, 0, 40)
-    iconFrame.Position = UDim2.new(0, 15, 0.5, -20)
-    iconFrame.BackgroundColor3 = color
-    iconFrame.BackgroundTransparency = 0.2
-    iconFrame.BorderSizePixel = 0
-    iconFrame.Parent = frame
-    local iconCorner = Instance.new("UICorner")
-    iconCorner.CornerRadius = UDim.new(1, 0)
-    iconCorner.Parent = iconFrame
-    local iconText = Instance.new("TextLabel")
-    iconText.Name = "IconText"
-    iconText.Size = UDim2.new(1, 0, 1, 0)
-    iconText.BackgroundTransparency = 1
-    iconText.Text = "i"
-    iconText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    iconText.TextSize = 24
-    iconText.Font = Enum.Font.GothamBold
-    iconText.Parent = iconFrame
-    local titleLabel = Instance.new("TextLabel")
-    titleLabel.Name = "TitleLabel"
-    titleLabel.Size = UDim2.new(1, -70, 0, 30)
-    titleLabel.Position = UDim2.new(0, 65, 0, 10)
-    titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = title
-    titleLabel.TextColor3 = color
-    titleLabel.TextSize = 18
-    titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    titleLabel.Parent = frame
-    local messageLabel = Instance.new("TextLabel")
-    messageLabel.Name = "MessageLabel"
-    messageLabel.Size = UDim2.new(1, -70, 0, 30)
-    messageLabel.Position = UDim2.new(0, 65, 0, 40)
-    messageLabel.BackgroundTransparency = 1
-    messageLabel.Text = message
-    messageLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-    messageLabel.TextSize = 14
-    messageLabel.Font = Enum.Font.Gotham
-    messageLabel.TextXAlignment = Enum.TextXAlignment.Left
-    messageLabel.TextWrapped = true
-    messageLabel.Parent = frame
-    local lineContainer = Instance.new("Frame")
-    lineContainer.Name = "LineContainer"
-    lineContainer.Size = UDim2.new(1, -30, 0, 2)
-    lineContainer.Position = UDim2.new(0, 15, 1, -5)
-    lineContainer.BackgroundTransparency = 1
-    lineContainer.ClipsDescendants = true
-    lineContainer.Parent = frame
-    local line = Instance.new("Frame")
-    line.Name = "Line"
-    line.Size = UDim2.new(1, 0, 1, 0)
-    line.Position = UDim2.new(0, 0, 0, 0)
-    line.BackgroundColor3 = color
-    line.BackgroundTransparency = 0.5
-    line.BorderSizePixel = 0
-    line.Parent = lineContainer
-    local lineCorner = Instance.new("UICorner")
-    lineCorner.CornerRadius = UDim.new(0, 2)
-    lineCorner.Parent = line
-    local tweenIn = TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -175, 0, 20)})
-    tweenIn:Play()
-    local tweenIcon = TweenService:Create(iconFrame, TweenInfo.new(0.3), {BackgroundTransparency = 0})
-    tweenIcon:Play()
-    local lineTween = TweenService:Create(line, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
-        Size = UDim2.new(0, 0, 1, 0),
-        Position = UDim2.new(0.5, 0, 0, 0)
-    })
-    lineTween:Play()
-    task.wait(duration)
-    local tweenOut = TweenService:Create(frame, TweenInfo.new(0.3), {Position = UDim2.new(0.5, -175, 0, -100), BackgroundTransparency = 1})
-    tweenOut:Play()
-    for _, child in pairs(frame:GetChildren()) do
-        if child:IsA("TextLabel") then
-            TweenService:Create(child, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
-        elseif child:IsA("Frame") and child ~= iconFrame and child ~= lineContainer then
-            TweenService:Create(child, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
-        end
+    Create({type = "UICorner",CornerRadius = UDim.new(0, radius or 12 * scale),Parent = frame})
+    return frame
+end
+
+function YUUGTRL:CreateScrollingFrame(parent, size, position, color, radius)
+    if not parent then return end
+    local frame = Instance.new("ScrollingFrame")
+    frame.Size = size or UDim2.new(0, 200 * scale, 0, 200 * scale)
+    frame.Position = position or UDim2.new(0, 0, 0, 0)
+    frame.BackgroundColor3 = color or currentTheme.FrameColor
+    frame.BackgroundTransparency = 0
+    frame.BorderSizePixel = 0
+    frame.ScrollBarThickness = 4 * scale
+    frame.ScrollBarImageColor3 = currentTheme.ScrollBarColor
+    frame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    frame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    frame.Parent = parent
+    if radius then
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, radius or 12 * scale)
+        corner.Parent = frame
     end
-    TweenService:Create(iconFrame, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(iconText, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
-    TweenService:Create(line, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
-    tweenOut.Completed:Connect(function()
-        notifGui:Destroy()
+    return frame
+end
+
+function YUUGTRL:CreateLabel(parent, text, position, size, color)
+    if not parent then return end
+    return Create({
+        type = "TextLabel",
+        Size = size or UDim2.new(0, 100 * scale, 0, 30 * scale),
+        Position = position or UDim2.new(0, 0, 0, 0),
+        BackgroundTransparency = 1,
+        Text = text or "Label",
+        TextColor3 = color or currentTheme.TextColor,
+        Font = Enum.Font.GothamBold,
+        TextSize = 14 * scale,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = parent
+    })
+end
+
+function YUUGTRL:CreateSlider(parent, text, min, max, default, callback, position, size)
+    if not parent then return end
+    local frame = self:CreateFrame(parent, size or UDim2.new(0, 200 * scale, 0, 50 * scale), position, currentTheme.FrameColor, 8 * scale)
+    self:CreateLabel(frame, text or "", UDim2.new(0, 10 * scale, 0, 5 * scale), UDim2.new(1, -60 * scale, 0, 20 * scale))
+    local valueLabel = self:CreateLabel(frame, tostring(default or 0), UDim2.new(1, -50 * scale, 0, 5 * scale), UDim2.new(0, 40 * scale, 0, 20 * scale))
+    valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+    local slider = self:CreateFrame(frame, UDim2.new(1, -20 * scale, 0, 8 * scale), UDim2.new(0, 10 * scale, 0, 30 * scale), Color3.fromRGB(60, 60, 70), 4 * scale)
+    local fill = self:CreateFrame(slider, UDim2.new((default or 0) / max, 0, 1, 0), UDim2.new(0, 0, 0, 0), currentTheme.AccentColor, 4 * scale)
+    local dragging = false
+    slider.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+        end
     end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local pos = input.Position.X - slider.AbsolutePosition.X
+            local size = slider.AbsoluteSize.X
+            local percent = math.clamp(pos / size, 0, 1)
+            local value = math.floor(min + (max - min) * percent)
+            fill.Size = UDim2.new(percent, 0, 1, 0)
+            valueLabel.Text = tostring(value)
+            if callback then pcall(callback, value) end
+        end
+    end)
+    return slider
 end
 
 function YUUGTRL:CreateWindow(title, size, position, options)
@@ -1519,94 +1650,10 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         end
         return walkFling
     end
-    function window:ShowNotification(title, message, duration, color)
-        YUUGTRL:ShowNotification(title, message, duration, color)
+    function window:ShowNotification(title, message, duration, color, icon)
+        YUUGTRL:ShowNotification(title, message, duration, color, icon)
     end
     return window
-end
-
-function YUUGTRL:CreateFrame(parent, size, position, color, radius)
-    if not parent then return end
-    local frame = Create({
-        type = "Frame",
-        Size = size or UDim2.new(0, 100 * scale, 0, 100 * scale),
-        Position = position or UDim2.new(0, 0, 0, 0),
-        BackgroundColor3 = color or currentTheme.FrameColor,
-        BorderSizePixel = 0,
-        Parent = parent
-    })
-    Create({type = "UICorner",CornerRadius = UDim.new(0, radius or 12 * scale),Parent = frame})
-    return frame
-end
-
-function YUUGTRL:CreateScrollingFrame(parent, size, position, color, radius)
-    if not parent then return end
-    local frame = Instance.new("ScrollingFrame")
-    frame.Size = size or UDim2.new(0, 200 * scale, 0, 200 * scale)
-    frame.Position = position or UDim2.new(0, 0, 0, 0)
-    frame.BackgroundColor3 = color or currentTheme.FrameColor
-    frame.BackgroundTransparency = 0
-    frame.BorderSizePixel = 0
-    frame.ScrollBarThickness = 4 * scale
-    frame.ScrollBarImageColor3 = currentTheme.ScrollBarColor
-    frame.CanvasSize = UDim2.new(0, 0, 0, 0)
-    frame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    frame.Parent = parent
-    if radius then
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, radius or 12 * scale)
-        corner.Parent = frame
-    end
-    return frame
-end
-
-function YUUGTRL:CreateLabel(parent, text, position, size, color)
-    if not parent then return end
-    return Create({
-        type = "TextLabel",
-        Size = size or UDim2.new(0, 100 * scale, 0, 30 * scale),
-        Position = position or UDim2.new(0, 0, 0, 0),
-        BackgroundTransparency = 1,
-        Text = text or "Label",
-        TextColor3 = color or currentTheme.TextColor,
-        Font = Enum.Font.GothamBold,
-        TextSize = 14 * scale,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = parent
-    })
-end
-
-function YUUGTRL:CreateSlider(parent, text, min, max, default, callback, position, size)
-    if not parent then return end
-    local frame = self:CreateFrame(parent, size or UDim2.new(0, 200 * scale, 0, 50 * scale), position, currentTheme.FrameColor, 8 * scale)
-    self:CreateLabel(frame, text or "", UDim2.new(0, 10 * scale, 0, 5 * scale), UDim2.new(1, -60 * scale, 0, 20 * scale))
-    local valueLabel = self:CreateLabel(frame, tostring(default or 0), UDim2.new(1, -50 * scale, 0, 5 * scale), UDim2.new(0, 40 * scale, 0, 20 * scale))
-    valueLabel.TextXAlignment = Enum.TextXAlignment.Right
-    local slider = self:CreateFrame(frame, UDim2.new(1, -20 * scale, 0, 8 * scale), UDim2.new(0, 10 * scale, 0, 30 * scale), Color3.fromRGB(60, 60, 70), 4 * scale)
-    local fill = self:CreateFrame(slider, UDim2.new((default or 0) / max, 0, 1, 0), UDim2.new(0, 0, 0, 0), currentTheme.AccentColor, 4 * scale)
-    local dragging = false
-    slider.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-        end
-    end)
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local pos = input.Position.X - slider.AbsolutePosition.X
-            local size = slider.AbsoluteSize.X
-            local percent = math.clamp(pos / size, 0, 1)
-            local value = math.floor(min + (max - min) * percent)
-            fill.Size = UDim2.new(percent, 0, 1, 0)
-            valueLabel.Text = tostring(value)
-            if callback then pcall(callback, value) end
-        end
-    end)
-    return slider
 end
 
 return YUUGTRL
