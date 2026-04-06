@@ -1203,6 +1203,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     local originalSize = windowSize
     local mainContainer = nil
     local hideBtnOriginalColor = options.HideColor or Color3.fromRGB(100, 150, 255)
+    local allScrollFrames = {}
     local window = {
         ScreenGui = ScreenGui,
         Main = Main,
@@ -1220,7 +1221,8 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         mainContainer = nil,
         allContentFrames = {},
         tabs = {},
-        currentTab = nil
+        currentTab = nil,
+        allScrollFrames = allScrollFrames
     }
     function window:SetMainColor(color)
         self.Main.BackgroundColor3 = color
@@ -1261,15 +1263,28 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         self.isMinimized = true
         if self.mainContainer then
             self.mainContainer.Visible = false
+            self.mainContainer.Active = false
         end
         for _, frame in pairs(self.allContentFrames) do
             if frame then
                 frame.Visible = false
+                frame.Active = false
+            end
+        end
+        for _, scrollFrame in pairs(self.allScrollFrames) do
+            if scrollFrame then
+                scrollFrame.Visible = false
+                scrollFrame.Active = false
+                scrollFrame.ScrollBarThickness = 0
             end
         end
         for _, tabFrame in pairs(self.tabs) do
             if tabFrame then
                 tabFrame.Visible = false
+                tabFrame.Active = false
+                if tabFrame.ScrollBarThickness then
+                    tabFrame.ScrollBarThickness = 0
+                end
             end
         end
         self.Main:TweenSize(self.minimizedSize, "Out", "Quad", 0.3, true)
@@ -1298,14 +1313,27 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         self.isMinimized = false
         if self.mainContainer then
             self.mainContainer.Visible = true
+            self.mainContainer.Active = true
         end
         for _, frame in pairs(self.allContentFrames) do
             if frame then
                 frame.Visible = true
+                frame.Active = true
+            end
+        end
+        for _, scrollFrame in pairs(self.allScrollFrames) do
+            if scrollFrame then
+                scrollFrame.Visible = true
+                scrollFrame.Active = true
+                scrollFrame.ScrollBarThickness = 4 * self.scale
             end
         end
         if self.currentTab and self.tabs[self.currentTab] then
             self.tabs[self.currentTab].Visible = true
+            self.tabs[self.currentTab].Active = true
+            if self.tabs[self.currentTab].ScrollBarThickness then
+                self.tabs[self.currentTab].ScrollBarThickness = 4 * self.scale
+            end
         end
         self.Main:TweenSize(originalSize, "Out", "Quad", 0.3, true)
         if self.HideBtn then
@@ -1359,6 +1387,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         local tabFrame = YUUGTRL:CreateScrollingFrame(self.mainContainer, UDim2.new(1, 0, 1, 0), UDim2.new(0, 0, 0, 0), self.options.MainColor or currentTheme.MainColor, 0)
         tabFrame.Visible = false
         tabFrame.BackgroundTransparency = 1
+        table.insert(self.allScrollFrames, tabFrame)
         self.tabs[name] = tabFrame
         if not self.currentTab then
             self.currentTab = name
@@ -1403,7 +1432,9 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             return YUUGTRL:CreateTextBox(tabFrame, placeholder, defaultText, callback, position, size, customColors, labelText)
         end
         function tabObject:CreateScrollingFrame(size, position, color, radius)
-            return YUUGTRL:CreateScrollingFrame(tabFrame, size, position, color, radius)
+            local sf = YUUGTRL:CreateScrollingFrame(tabFrame, size, position, color, radius)
+            table.insert(self.allScrollFrames, sf)
+            return sf
         end
         function tabObject:CreateFrame(size, position, color, radius)
             return YUUGTRL:CreateFrame(tabFrame, size, position, color, radius)
@@ -1459,6 +1490,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         local framePos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
         local newFrame = YUUGTRL:CreateScrollingFrame(self.mainContainer, frameSize, framePos, color, radius and radius * self.scale)
         table.insert(self.allContentFrames, newFrame)
+        table.insert(self.allScrollFrames, newFrame)
         return newFrame
     end
     function window:CreateLabel(text, position, size, color, translationKey)
