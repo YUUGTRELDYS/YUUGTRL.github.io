@@ -883,7 +883,6 @@ function YUUGTRL:CreateTextBox(parent, placeholder, defaultText, callback, posit
     
     local textBoxScale = scale
     
-    -- ИСПРАВЛЕНИЕ: проверяем наличие scale у родителя, но не используем parent.Parent.scale
     if parent and parent.Parent and parent.Parent:FindFirstChild("scale") then
         textBoxScale = parent.Parent.scale.Value
     end
@@ -1147,6 +1146,16 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         ClipsDescendants = true
     })
     Create({type = "UICorner",CornerRadius = UDim.new(0, 12 * winScale),Parent = Main})
+    
+    local blockFrame = Instance.new("Frame")
+    blockFrame.Size = UDim2.new(1, 0, 1, 0)
+    blockFrame.Position = UDim2.new(0, 0, 0, 0)
+    blockFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    blockFrame.BackgroundTransparency = 0
+    blockFrame.BorderSizePixel = 0
+    blockFrame.Visible = false
+    blockFrame.Parent = Main
+    
     local Header = Create({
         type = "Frame",
         Size = UDim2.new(1, 0, 0, 40 * winScale),
@@ -1204,9 +1213,11 @@ function YUUGTRL:CreateWindow(title, size, position, options)
     local originalSize = windowSize
     local mainContainer = nil
     local hideBtnOriginalColor = options.HideColor or Color3.fromRGB(100, 150, 255)
+    local allScrollFrames = {}
     local window = {
         ScreenGui = ScreenGui,
         Main = Main,
+        blockFrame = blockFrame,
         Header = Header,
         Title = Title,
         SettingsBtn = SettingsBtn,
@@ -1219,8 +1230,12 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         isMinimized = false,
         minimizedSize = UDim2.new(windowSize.X.Scale, windowSize.X.Offset, 0, 40 * winScale),
         mainContainer = nil,
-        allContentFrames = {}
+        allContentFrames = {},
+        tabs = {},
+        currentTab = nil,
+        allScrollFrames = allScrollFrames
     }
+    
     function window:SetMainColor(color)
         self.Main.BackgroundColor3 = color
         if self.mainContainer then
@@ -1232,9 +1247,11 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             end
         end
     end
+    
     function window:SetHeaderColor(color)
         self.Header.BackgroundColor3 = color
     end
+    
     function window:SetTextColor(color)
         self.Title.TextColor3 = color
         for _, element in pairs(self.elements) do
@@ -1243,6 +1260,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             end
         end
     end
+    
     function window:SetCornerRadius(radius)
         for _, v in pairs(self.Main:GetChildren()) do
             if v:IsA("UICorner") then
@@ -1255,15 +1273,27 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             end
         end
     end
+    
     function window:Minimize()
         if self.isMinimized then return end
         self.isMinimized = true
+        self.blockFrame.Visible = true
         if self.mainContainer then
             self.mainContainer.Visible = false
         end
         for _, frame in pairs(self.allContentFrames) do
             if frame then
                 frame.Visible = false
+            end
+        end
+        for _, scrollFrame in pairs(self.allScrollFrames) do
+            if scrollFrame then
+                scrollFrame.Visible = false
+            end
+        end
+        for _, tabFrame in pairs(self.tabs) do
+            if tabFrame then
+                tabFrame.Visible = false
             end
         end
         self.Main:TweenSize(self.minimizedSize, "Out", "Quad", 0.3, true)
@@ -1287,9 +1317,11 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             self.hideCallback(true)
         end
     end
+    
     function window:Maximize()
         if not self.isMinimized then return end
         self.isMinimized = false
+        self.blockFrame.Visible = false
         if self.mainContainer then
             self.mainContainer.Visible = true
         end
@@ -1297,6 +1329,14 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             if frame then
                 frame.Visible = true
             end
+        end
+        for _, scrollFrame in pairs(self.allScrollFrames) do
+            if scrollFrame then
+                scrollFrame.Visible = true
+            end
+        end
+        if self.currentTab and self.tabs[self.currentTab] then
+            self.tabs[self.currentTab].Visible = true
         end
         self.Main:TweenSize(originalSize, "Out", "Quad", 0.3, true)
         if self.HideBtn then
@@ -1323,6 +1363,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             self.hideCallback(false)
         end
     end
+    
     function window:ToggleMinimize()
         if self.isMinimized then
             self:Maximize()
@@ -1330,11 +1371,104 @@ function YUUGTRL:CreateWindow(title, size, position, options)
             self:Minimize()
         end
     end
+    
     if HideBtn then
         HideBtn.MouseButton1Click:Connect(function()
             window:ToggleMinimize()
         end)
     end
+    
+    function window:Tab(name)
+        if not self.mainContainer then
+            self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
+                UDim2.new(1, 0, 1, -40 * self.scale), 
+                UDim2.new(0, 0, 0, 40 * self.scale),
+                self.options.MainColor or currentTheme.MainColor, 0)
+            self.mainContainer.BackgroundTransparency = 1
+            table.insert(self.allContentFrames, self.mainContainer)
+        end
+        local tabButtons = {}
+        local tabContainer = YUUGTRL:CreateFrame(self.Header, UDim2.new(0, 0, 1, 0), UDim2.new(0, 80 * self.scale, 0, 0), Color3.fromRGB(40, 40, 50), 0)
+        tabContainer.BackgroundTransparency = 1
+        local tabFrame = YUUGTRL:CreateScrollingFrame(self.mainContainer, UDim2.new(1, 0, 1, 0), UDim2.new(0, 0, 0, 0), self.options.MainColor or currentTheme.MainColor, 0)
+        tabFrame.Visible = false
+        tabFrame.BackgroundTransparency = 1
+        table.insert(self.allScrollFrames, tabFrame)
+        self.tabs[name] = tabFrame
+        if not self.currentTab then
+            self.currentTab = name
+            tabFrame.Visible = true
+        end
+        local tabButton = YUUGTRL:CreateButton(tabContainer, name, function()
+            for _, frame in pairs(self.tabs) do
+                frame.Visible = false
+            end
+            tabFrame.Visible = true
+            self.currentTab = name
+        end, self.options.AccentColor or currentTheme.AccentColor, UDim2.new(0, #tabButtons * 70 * self.scale, 0, 0), UDim2.new(0, 70 * self.scale, 1, 0))
+        tabButton.BackgroundTransparency = 0.2
+        tabButton.TextSize = 12 * self.scale
+        table.insert(tabButtons, tabButton)
+        local tabObject = {}
+        function tabObject:Label(text, translationKey)
+            local label = YUUGTRL:CreateLabel(tabFrame, text, UDim2.new(0, 5, 0, 5), UDim2.new(1, -10, 0, 25), self.options.TextColor or currentTheme.TextColor)
+            if translationKey then
+                YUUGTRL:RegisterTranslatable(label, translationKey)
+            end
+            return label
+        end
+        function tabObject:Button(text, callback, color, position, size, translationKey)
+            local btn = YUUGTRL:CreateButton(tabFrame, text, callback, color or self.options.ButtonColor or currentTheme.ButtonColor, position, size)
+            if translationKey then
+                YUUGTRL:RegisterTranslatable(btn, translationKey)
+            end
+            return btn
+        end
+        function tabObject:Toggle(text, default, callback, colorOn, colorOff, translationKey)
+            local toggle = YUUGTRL:CreateButtonToggle(tabFrame, text, default, callback, nil, nil, {on = colorOn or self.options.AccentColor or currentTheme.AccentColor, off = colorOff or Color3.fromRGB(60, 60, 80)})
+            if translationKey then
+                YUUGTRL:RegisterTranslatable(toggle.button, translationKey)
+            end
+            return toggle
+        end
+        function tabObject:Slider(text, min, max, default, callback)
+            return YUUGTRL:CreateSlider(tabFrame, text, min, max, default, callback)
+        end
+        function tabObject:TextBox(placeholder, defaultText, callback, position, size, customColors, labelText)
+            return YUUGTRL:CreateTextBox(tabFrame, placeholder, defaultText, callback, position, size, customColors, labelText)
+        end
+        function tabObject:CreateScrollingFrame(size, position, color, radius)
+            local sf = YUUGTRL:CreateScrollingFrame(tabFrame, size, position, color, radius)
+            table.insert(self.allScrollFrames, sf)
+            return sf
+        end
+        function tabObject:CreateFrame(size, position, color, radius)
+            return YUUGTRL:CreateFrame(tabFrame, size, position, color, radius)
+        end
+        function tabObject:CreateButtonToggle(text, default, callback, position, size, colors, translationKey)
+            local toggle = YUUGTRL:CreateButtonToggle(tabFrame, text, default, callback, position, size, colors)
+            if translationKey and toggle and toggle.button then
+                YUUGTRL:RegisterTranslatable(toggle.button, translationKey)
+            end
+            return toggle
+        end
+        function tabObject:CreateAntiSitButton(text, default, callback, position, size, colors, translationKey)
+            local antiSit = YUUGTRL:CreateAntiSitButton(tabFrame, text, default, callback, position, size, colors)
+            if translationKey and antiSit and antiSit.button then
+                YUUGTRL:RegisterTranslatable(antiSit.button, translationKey)
+            end
+            return antiSit
+        end
+        function tabObject:CreateWalkFlingButton(text, default, callback, position, size, colors, translationKey)
+            local walkFling = YUUGTRL:CreateWalkFlingButton(tabFrame, text, default, callback, position, size, colors)
+            if translationKey and walkFling and walkFling.button then
+                YUUGTRL:RegisterTranslatable(walkFling.button, translationKey)
+            end
+            return walkFling
+        end
+        return tabObject
+    end
+    
     function window:CreateFrame(size, position, color, radius)
         if not self.mainContainer then
             self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
@@ -1350,6 +1484,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         table.insert(self.allContentFrames, newFrame)
         return newFrame
     end
+    
     function window:CreateScrollingFrame(size, position, color, radius)
         if not self.mainContainer then
             self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
@@ -1363,8 +1498,10 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         local framePos = position and UDim2.new(position.X.Scale, position.X.Offset * self.scale, position.Y.Scale, position.Y.Offset * self.scale) or nil
         local newFrame = YUUGTRL:CreateScrollingFrame(self.mainContainer, frameSize, framePos, color, radius and radius * self.scale)
         table.insert(self.allContentFrames, newFrame)
+        table.insert(self.allScrollFrames, newFrame)
         return newFrame
     end
+    
     function window:CreateLabel(text, position, size, color, translationKey)
         if not self.mainContainer then
             self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
@@ -1384,6 +1521,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         table.insert(self.elements, {type = "label", obj = label})
         return label
     end
+    
     function window:CreateButton(text, callback, color, position, size, translationKey)
         if not self.mainContainer then
             self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
@@ -1403,6 +1541,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         table.insert(self.elements, {type = "button", obj = btn})
         return btn
     end
+    
     function window:CreateSlider(text, min, max, default, callback, position, size)
         if not self.mainContainer then
             self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
@@ -1416,6 +1555,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         local sliderSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
         return YUUGTRL:CreateSlider(self.mainContainer, text, min, max, default, callback, sliderPos, sliderSize)
     end
+    
     function window:CreateTextBox(placeholder, defaultText, callback, position, size, customColors, labelText)
         if not self.mainContainer then
             self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
@@ -1429,25 +1569,31 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         local boxSize = size and UDim2.new(size.X.Scale, size.X.Offset * self.scale, size.Y.Scale, size.Y.Offset * self.scale) or nil
         return YUUGTRL:CreateTextBox(self.mainContainer, placeholder, defaultText, callback, boxPos, boxSize, customColors, labelText)
     end
+    
     function window:SetSettingsCallback(callback)
         if SettingsBtn then
             SettingsBtn.MouseButton1Click:Connect(callback)
         end
     end
+    
     function window:SetHideCallback(callback)
         self.hideCallback = callback
     end
+    
     function window:SetCloseCallback(callback)
         if CloseBtn then
             CloseBtn.MouseButton1Click:Connect(callback)
         end
     end
+    
     function window:Destroy()
         ScreenGui:Destroy()
     end
+    
     function window:UpdateLanguage()
         YUUGTRL:UpdateAllTexts()
     end
+    
     function window:CreateButtonToggle(text, default, callback, position, size, colors, translationKey)
         if not self.mainContainer then
             self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
@@ -1474,6 +1620,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         end
         return toggle
     end
+    
     function window:CreateAntiSitButton(text, default, callback, position, size, colors, translationKey)
         if not self.mainContainer then
             self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
@@ -1500,6 +1647,7 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         end
         return antiSit
     end
+    
     function window:CreateWalkFlingButton(text, default, callback, position, size, colors, translationKey)
         if not self.mainContainer then
             self.mainContainer = YUUGTRL:CreateFrame(self.Main, 
@@ -1526,9 +1674,11 @@ function YUUGTRL:CreateWindow(title, size, position, options)
         end
         return walkFling
     end
+    
     function window:ShowNotification(title, message, duration, color)
         YUUGTRL:ShowNotification(title, message, duration, color)
     end
+    
     return window
 end
 
