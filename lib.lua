@@ -883,6 +883,11 @@ function YUUGTRL:CreateTextBox(parent, placeholder, defaultText, callback, posit
     
     local textBoxScale = scale
     
+    -- ИСПРАВЛЕНИЕ: проверяем наличие scale у родителя, но не используем parent.Parent.scale
+    if parent and parent.Parent and parent.Parent:FindFirstChild("scale") then
+        textBoxScale = parent.Parent.scale.Value
+    end
+    
     local frameSize = size or UDim2.new(1, -10, 0, 40)
     local framePos = position or UDim2.new(0, 5, 0, 5)
     local frame = self:CreateFrame(parent, frameSize, framePos, (customColors and customColors.background or currentTheme.InputColor), 8)
