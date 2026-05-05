@@ -19,66 +19,172 @@ splash.DisplayOrder = 9999
 splash.ResetOnSpawn = false
 splash.Parent = player:WaitForChild("PlayerGui")
 
-local splashWidth = 200 * scale
-local splashHeight = 50 * scale
+local splashWidth = 400 * scale
+local splashHeight = 200 * scale
 local splashFrame = Instance.new("Frame")
 splashFrame.Size = UDim2.new(0, splashWidth, 0, splashHeight)
-splashFrame.Position = UDim2.new(1, -splashWidth - 15, 0, 15)
-splashFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-splashFrame.BackgroundTransparency = 0.2
+splashFrame.Position = UDim2.new(0.5, -splashWidth/2, 0.5, -splashHeight/2)
+splashFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
+splashFrame.BackgroundTransparency = 0.15
 splashFrame.BorderSizePixel = 0
 splashFrame.Parent = splash
 
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 10 * scale)
+corner.CornerRadius = UDim.new(0, 20 * scale)
 corner.Parent = splashFrame
+
+local glowBorder = Instance.new("Frame")
+glowBorder.Size = UDim2.new(1, 4, 1, 4)
+glowBorder.Position = UDim2.new(0, -2, 0, -2)
+glowBorder.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+glowBorder.BackgroundTransparency = 0.8
+glowBorder.BorderSizePixel = 0
+glowBorder.Parent = splashFrame
+local glowCorner = Instance.new("UICorner")
+glowCorner.CornerRadius = UDim.new(0, 22 * scale)
+glowCorner.Parent = glowBorder
 
 local gradient = Instance.new("UIGradient")
 gradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 40)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 25))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 40)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(30, 20, 50)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 40))
 })
-gradient.Rotation = 90
+gradient.Rotation = 45
 gradient.Parent = splashFrame
 
+local logoContainer = Instance.new("Frame")
+logoContainer.Size = UDim2.new(1, 0, 0, 80 * scale)
+logoContainer.Position = UDim2.new(0, 0, 0.3, 0)
+logoContainer.BackgroundTransparency = 1
+logoContainer.Parent = splashFrame
+
 local logo = Instance.new("TextLabel")
-logo.Size = UDim2.new(0.6, -5 * scale, 1, 0)
-logo.Position = UDim2.new(0, 8 * scale, 0, 0)
+logo.Size = UDim2.new(1, 0, 1, 0)
 logo.BackgroundTransparency = 1
 logo.Text = "YUUGTRL"
 logo.TextColor3 = Color3.fromRGB(255, 255, 255)
 logo.Font = Enum.Font.GothamBold
-logo.TextSize = 22 * scale
-logo.TextXAlignment = Enum.TextXAlignment.Left
-logo.Parent = splashFrame
+logo.TextSize = 48 * scale
+logo.TextScaled = true
+logo.TextXAlignment = Enum.TextXAlignment.Center
+logo.Parent = logoContainer
 
-local loaded = Instance.new("TextLabel")
-loaded.Size = UDim2.new(0.4, -5 * scale, 1, 0)
-loaded.Position = UDim2.new(0.6, 0, 0, 0)
-loaded.BackgroundTransparency = 1
-loaded.Text = "loaded"
-loaded.TextColor3 = Color3.fromRGB(255, 255, 255)
-loaded.Font = Enum.Font.Gotham
-loaded.TextSize = 14 * scale
-loaded.TextXAlignment = Enum.TextXAlignment.Left
-loaded.Parent = splashFrame
+local logoGlow = Instance.new("TextLabel")
+logoGlow.Size = UDim2.new(1, 0, 1, 0)
+logoGlow.Position = UDim2.new(0, 0, 0, 0)
+logoGlow.BackgroundTransparency = 1
+logoGlow.Text = "YUUGTRL"
+logoGlow.Font = Enum.Font.GothamBold
+logoGlow.TextSize = 48 * scale
+logoGlow.TextScaled = true
+logoGlow.TextXAlignment = Enum.TextXAlignment.Center
+logoGlow.TextColor3 = Color3.fromRGB(0, 255, 255)
+logoGlow.TextTransparency = 0.7
+logoGlow.Parent = logoContainer
 
-splashFrame:TweenPosition(UDim2.new(1, -splashWidth - 15, 0, 15), "Out", "Quad", 0.3, true)
+local hubText = Instance.new("TextLabel")
+hubText.Size = UDim2.new(1, 0, 0, 25 * scale)
+hubText.Position = UDim2.new(0, 0, 0.65, 0)
+hubText.BackgroundTransparency = 1
+hubText.Text = "HUB"
+hubText.TextColor3 = Color3.fromRGB(255, 100, 255)
+hubText.Font = Enum.Font.Gotham
+hubText.TextSize = 20 * scale
+hubText.TextXAlignment = Enum.TextXAlignment.Center
+hubText.TextTransparency = 1
+hubText.Parent = splashFrame
 
-task.wait(0.2)
+local loadingBar = Instance.new("Frame")
+loadingBar.Size = UDim2.new(0.7, 0, 0, 4 * scale)
+loadingBar.Position = UDim2.new(0.15, 0, 0.85, 0)
+loadingBar.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+loadingBar.BackgroundTransparency = 0.5
+loadingBar.BorderSizePixel = 0
+loadingBar.Parent = splashFrame
+local barCorner = Instance.new("UICorner")
+barCorner.CornerRadius = UDim.new(0, 2 * scale)
+barCorner.Parent = loadingBar
 
-local textColorTween = TweenService:Create(logo, TweenInfo.new(0.8, Enum.EasingStyle.Quad), {TextColor3 = Color3.fromRGB(170, 85, 255)})
+local barFill = Instance.new("Frame")
+barFill.Size = UDim2.new(0, 0, 1, 0)
+barFill.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+barFill.BorderSizePixel = 0
+barFill.Parent = loadingBar
+local fillCorner = Instance.new("UICorner")
+fillCorner.CornerRadius = UDim.new(0, 2 * scale)
+fillCorner.Parent = barFill
+
+local statusText = Instance.new("TextLabel")
+statusText.Size = UDim2.new(1, 0, 0, 15 * scale)
+statusText.Position = UDim2.new(0, 0, 0.92, 0)
+statusText.BackgroundTransparency = 1
+statusText.Text = "LOADING..."
+statusText.TextColor3 = Color3.fromRGB(150, 150, 200)
+statusText.Font = Enum.Font.Gotham
+statusText.TextSize = 10 * scale
+statusText.TextXAlignment = Enum.TextXAlignment.Center
+statusText.Parent = splashFrame
+
+local statusSteps = {"INITIALIZING...", "LOADING MODULES...", "CONNECTING TO HUB...", "READY!"}
+local stepIndex = 1
+
+local barTween = TweenService:Create(barFill, TweenInfo.new(0.8, Enum.EasingStyle.Linear), {Size = UDim2.new(0.25, 0, 1, 0)})
+barTween:Play()
+barTween.Completed:Connect(function()
+    stepIndex = 2
+    statusText.Text = statusSteps[2]
+    local t2 = TweenService:Create(barFill, TweenInfo.new(0.8, Enum.EasingStyle.Linear), {Size = UDim2.new(0.5, 0, 1, 0)})
+    t2:Play()
+    t2.Completed:Connect(function()
+        stepIndex = 3
+        statusText.Text = statusSteps[3]
+        local t3 = TweenService:Create(barFill, TweenInfo.new(0.8, Enum.EasingStyle.Linear), {Size = UDim2.new(0.75, 0, 1, 0)})
+        t3:Play()
+        t3.Completed:Connect(function()
+            stepIndex = 4
+            statusText.Text = statusSteps[4]
+            local t4 = TweenService:Create(barFill, TweenInfo.new(0.4, Enum.EasingStyle.Linear), {Size = UDim2.new(1, 0, 1, 0)})
+            t4:Play()
+        end)
+    end)
+end)
+
+local logoGlowAnim = TweenService:Create(logoGlow, TweenInfo.new(1.5, Enum.EasingStyle.Linear), {TextTransparency = 0.3})
+logoGlowAnim:Play()
+logoGlowAnim:Connect(function()
+    logoGlowAnim = TweenService:Create(logoGlow, TweenInfo.new(1.5, Enum.EasingStyle.Linear), {TextTransparency = 0.7})
+    logoGlowAnim:Play()
+end)
+
+local borderAnim = TweenService:Create(glowBorder, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {BackgroundTransparency = 0.5})
+borderAnim:Play()
+
+task.wait(2.5)
+
+local pulseBorder = TweenService:Create(glowBorder, TweenInfo.new(0.3, Enum.EasingStyle.Sine), {BackgroundTransparency = 0})
+pulseBorder:Play()
+pulseBorder.Completed:Connect(function()
+    TweenService:Create(glowBorder, TweenInfo.new(0.3, Enum.EasingStyle.Sine), {BackgroundTransparency = 0.8}):Play()
+end)
+
+local textColorTween = TweenService:Create(logo, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {TextColor3 = Color3.fromRGB(0, 255, 255)})
 textColorTween:Play()
 
-task.wait(1.2)
+TweenService:Create(hubText, TweenInfo.new(0.4, Enum.EasingStyle.Quad), {TextTransparency = 0}):Play()
 
-local fadeTween = TweenService:Create(splashFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {
-    Position = UDim2.new(1, -splashWidth - 15, 1, splashHeight + 15),
+task.wait(1)
+
+local fadeTween = TweenService:Create(splashFrame, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {
     BackgroundTransparency = 1
 })
 fadeTween:Play()
-TweenService:Create(logo, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {TextTransparency = 1}):Play()
-TweenService:Create(loaded, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {TextTransparency = 1}):Play()
+TweenService:Create(logo, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
+TweenService:Create(logoGlow, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
+TweenService:Create(hubText, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
+TweenService:Create(loadingBar, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+TweenService:Create(statusText, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
+TweenService:Create(glowBorder, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
 
 fadeTween.Completed:Connect(function()
     splash:Destroy()
@@ -883,7 +989,6 @@ function YUUGTRL:CreateTextBox(parent, placeholder, defaultText, callback, posit
     
     local textBoxScale = scale
     
-    -- ИСПРАВЛЕНИЕ: проверяем наличие scale у родителя, но не используем parent.Parent.scale
     if parent and parent.Parent and parent.Parent:FindFirstChild("scale") then
         textBoxScale = parent.Parent.scale.Value
     end
